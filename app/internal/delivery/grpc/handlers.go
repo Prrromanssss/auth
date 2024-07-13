@@ -20,6 +20,7 @@ func NewGRPCHandlers() pb.UserV1Server {
 
 func (h *GRPCHandlers) Create(ctx context.Context, req *pb.CreateRequest) (*pb.CreateResponse, error) {
 	log.Printf("rpc Create, request: %+v", req)
+
 	return &pb.CreateResponse{
 		Id: gofakeit.Int64(),
 	}, nil
@@ -27,6 +28,7 @@ func (h *GRPCHandlers) Create(ctx context.Context, req *pb.CreateRequest) (*pb.C
 
 func (h *GRPCHandlers) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	log.Printf("rpc Get, request: %+v", req)
+
 	return &pb.GetResponse{
 		Id:        gofakeit.Int64(),
 		Name:      gofakeit.Name(),
@@ -40,11 +42,13 @@ func (h *GRPCHandlers) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResp
 
 func (h *GRPCHandlers) Update(ctx context.Context, req *pb.UpdateRequest) (*emptypb.Empty, error) {
 	log.Printf("rpc Update, request: %+v", req)
+
 	return &emptypb.Empty{}, nil
 
 }
 
 func (h *GRPCHandlers) Delete(ctx context.Context, req *pb.DeleteRequest) (*emptypb.Empty, error) {
 	log.Printf("rpc Delete, request: %+v", req)
+
 	return &emptypb.Empty{}, nil
 }
