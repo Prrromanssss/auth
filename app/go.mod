@@ -3,6 +3,7 @@ module github.com/Prrromanssss/auth
 go 1.22.4
 
 require (
+	github.com/brianvoe/gofakeit v3.18.0+incompatible
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/pkg/errors v0.9.1
 	google.golang.org/grpc v1.65.0
