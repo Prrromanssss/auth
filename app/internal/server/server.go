@@ -11,20 +11,25 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/jmoiron/sqlx"
+
 	"github.com/Prrromanssss/auth/config"
 )
 
 type Server struct {
 	cfg  *config.Config
 	grpc *grpc.Server
+	pgDB *sqlx.DB
 }
 
 func NewServer(
 	cfg *config.Config,
+	database *sqlx.DB,
 ) *Server {
 	return &Server{
 		cfg:  cfg,
 		grpc: grpc.NewServer(),
+		pgDB: database,
 	}
 }
 

@@ -1,0 +1,10 @@
+grpc:
+  host: "0.0.0.0"
+  port: "50051"
+postgres:
+  host: "pg-local"
+  port: "5432"
+  user: "auth-user"
+  password: "auth-password"
+  dbname: "auth"
+  sslmode: "disable"
