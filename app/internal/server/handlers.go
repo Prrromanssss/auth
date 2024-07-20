@@ -11,8 +11,8 @@ import (
 
 func (s *Server) MapHandlers(ctx context.Context) error {
 	// repos
-
 	userRepo := user.NewPGRepo(s.pgDB)
+
 	// handlers
 	GRPCHandlers := deliveryGRPC.NewGRPCHandlers(userRepo)
 
