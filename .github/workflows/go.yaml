@@ -89,14 +89,14 @@ jobs:
         run: |
           AUTH_TAG_NAME=$(echo $GITHUB_SHA | head -c7)
           docker buildx create --use
-          docker buildx build --no-cache --push --tag $REGISTRY/$IMAGE_APP_NAME:$TAG_NAME -f Dockerfile .
+          docker buildx build --no-cache --push --tag $REGISTRY/$IMAGE_APP_NAME:$AUTH_TAG_NAME -f Dockerfile .
           echo "AUTH_TAG_NAME=$AUTH_TAG_NAME" >> $GITHUB_ENV
       
       - name: Build and Push Migrator
         run: |
           AUTH_MIGRATOR_TAG_NAME=$(echo $GITHUB_SHA | head -c7)
           docker buildx create --use
-          docker buildx build --no-cache --push --tag $REGISTRY/$IMAGE_MIGRATOR_NAME:$TAG_NAME -f migration.Dockerfile .
+          docker buildx build --no-cache --push --tag $REGISTRY/$IMAGE_MIGRATOR_NAME:$AUTH_MIGRATOR_TAG_NAME -f migration.Dockerfile .
           echo "AUTH_MIGRATOR_TAG_NAME=$AUTH_MIGRATOR_TAG_NAME" >> $GITHUB_ENV
       
       - name: Update .env file with tags
