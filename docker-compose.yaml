@@ -6,9 +6,7 @@ volumes:
 
 services:
   auth:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: cr.selcloud.ru/slimshady/auth:${AUTH_TAG_NAME}
     restart: always
     depends_on:
       - auth-pg
@@ -28,8 +26,7 @@ services:
 
   auth-migrator:
     build:
-      context: .
-      dockerfile: migration.Dockerfile
+      image: cr.selcloud.ru/slimshady/auth-migrator:${AUTH_MIGRATOR_TAG_NAME}
     restart: on-failure
     environment:
       DB_HOST: auth-pg
