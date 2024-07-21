@@ -11,13 +11,13 @@ services:
       dockerfile: Dockerfile
     restart: always
     depends_on:
-      - pg
+      - auth-pg
     ports:
       - "50051:50051"
     environment:
       - CONFIG_PATH=/config.yaml
 
-  pg:
+  auth-pg:
     image: postgres:16.3-alpine3.20
     env_file:
       - ".env"
@@ -26,10 +26,10 @@ services:
     volumes:
       - postgres_volume_local:/var/lib/postgresql/data
 
-  migrator:
+  auth-migrator:
     build:
       context: .
       dockerfile: migration.Dockerfile
     restart: on-failure
     environment:
-      DB_HOST: pg
+      DB_HOST: auth-pg

@@ -9,7 +9,7 @@ on:
 env:
   REGISTRY: "cr.selcloud.ru/slimshady"
   IMAGE_APP_NAME: "auth"
-  IMAGE_MIGRATOR_NAME: "migrator"
+  IMAGE_MIGRATOR_NAME: "auth-migrator"
 
 jobs:
   build-and-test:
