@@ -9,8 +9,7 @@ on:
 env:
   REGISTRY: "cr.selcloud.ru/slimshady"
   IMAGE_APP_NAME: "auth"
-  IMAGE_DEV_MIGRATOR_NAME: "dev-migrator"
-  IMAGE_PROD_MIGRATOR_NAME: "prod-migrator"
+  IMAGE_MIGRATOR_NAME: "migrator"
 
 jobs:
   build-and-test:
@@ -91,24 +90,18 @@ jobs:
           docker buildx create --use
           docker buildx build --no-cache --push --tag $REGISTRY/$IMAGE_APP_NAME:$TAG_NAME -f Dockerfile .
       
-      - name: Build and Push Dev Migrator
+      - name: Build and Push Migrator
         run: |
           TAG_NAME=$(echo $GITHUB_SHA | head -c7)
           docker buildx create --use
-          docker buildx build --no-cache --push --tag $REGISTRY/$IMAGE_DEV_MIGRATOR_NAME:$TAG_NAME -f ./deploy/development/Dockerfile ./deploy/development
-
-      - name: Build and Push Prod Migrator
-        run: |
-          TAG_NAME=$(echo $GITHUB_SHA | head -c7)
-          docker buildx create --use
-          docker buildx build --no-cache --push --tag $REGISTRY/$IMAGE_PROD_MIGRATOR_NAME:$TAG_NAME -f ./deploy/production/Dockerfile ./deploy/production
+          docker buildx build --no-cache --push --tag $REGISTRY/$IMAGE_MIGRATOR_NAME:$TAG_NAME -f migration.Dockerfile .
       
       - name: Copy Docker Compose File via SCP
         run: |
           echo ${{ secrets.SSHKEY }} > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-          scp -i ~/.ssh/id_rsa docker-compose.yml ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_HOST }}:
+          scp -i ~/.ssh/id_rsa docker-compose.yaml ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_HOST }}:
 
   deploy:
     runs-on: ubuntu-latest

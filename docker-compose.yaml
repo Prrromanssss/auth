@@ -11,43 +11,25 @@ services:
       dockerfile: Dockerfile
     restart: always
     depends_on:
-      - pg-local
-      - pg-prod
+      - pg
     ports:
       - "50051:50051"
     environment:
-      - CONFIG_PATH=/local-config.yaml
+      - CONFIG_PATH=/config.yaml
 
-  pg-local:
+  pg:
     image: postgres:16.3-alpine3.20
     env_file:
-      - ".deploy/development/local.env"
+      - ".env"
     ports:
       - "54321:5432"
     volumes:
       - postgres_volume_local:/var/lib/postgresql/data
 
-  pg-prod:
-    image: postgres:16.3-alpine3.20
-    env_file:
-      - .deploy/production/prod.env
-    ports:
-      - "54322:5432"
-    volumes:
-      - postgres_volume_prod:/var/lib/postgresql/data
-
-  migrator-local:
+  migrator:
     build:
       context: .
-      dockerfile: .deploy/development/migration.Dockerfile
+      dockerfile: migration.Dockerfile
     restart: on-failure
     environment:
-      DB_HOST: pg-local
-
-  migrator-prod:
-    build:
-      context: .
-      dockerfile: .deploy/production/migration.Dockerfile
-    restart: on-failure
-    environment:
-      DB_HOST: pg-prod
+      DB_HOST: pg
