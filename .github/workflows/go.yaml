@@ -150,6 +150,10 @@ jobs:
           key: ${{ secrets.SSHKEY }}
           envs: AUTH_TAG_NAME, REGISTRY, AUTH_MIGRATOR_TAG_NAME, IMAGE_APP_NAME, IMAGE_MIGRATOR_NAME
           script: |
+            # Set up variables
+            echo "AUTH_TAG_NAME=$AUTH_TAG_NAME" >> .env
+            echo "AUTH_MIGRATOR_TAG_NAME=$AUTH_MIGRATOR_TAG_NAME" >> .env
+
             # Login into Selectel Registry
             echo ${{ secrets.REGISTRY_PASSWORD }} | docker login -u ${{ secrets.REGISTRY_USERNAME }} --password-stdin $REGISTRY
             
