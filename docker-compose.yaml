@@ -11,7 +11,7 @@ services:
     depends_on:
       - auth-pg
     ports:
-      - "50051:50051"
+      - "50052:50052"
     environment:
       - CONFIG_PATH=/config.yaml
 
