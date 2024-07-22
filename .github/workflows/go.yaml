@@ -140,12 +140,7 @@ jobs:
           path: .
 
       - name: Source tag names and export to environment
-        run: |
-          source tag_names.env
-          echo "AUTH_TAG_NAME=$AUTH_TAG_NAME" >> $GITHUB_ENV
-          echo "AUTH_MIGRATOR_TAG_NAME=$AUTH_MIGRATOR_TAG_NAME" >> $GITHUB_ENV
-          export AUTH_TAG_NAME=$AUTH_TAG_NAME
-          export AUTH_MIGRATOR_TAG_NAME=$AUTH_MIGRATOR_TAG_NAME
+        run: source tag_names.env
 
       - name: Deploy to Selectel Cloud via SSH action
         uses: appleboy/ssh-action@v1.0.0
@@ -155,10 +150,6 @@ jobs:
           key: ${{ secrets.SSHKEY }}
           envs: AUTH_TAG_NAME, REGISTRY, AUTH_MIGRATOR_TAG_NAME, IMAGE_APP_NAME, IMAGE_MIGRATOR_NAME
           script: |
-            # Set up variables
-            echo "AUTH_TAG_NAME=$AUTH_TAG_NAME" >> .env
-            echo "AUTH_MIGRATOR_TAG_NAME=$AUTH_MIGRATOR_TAG_NAME" >> .env
-
             # Login into Selectel Registry
             echo ${{ secrets.REGISTRY_PASSWORD }} | docker login -u ${{ secrets.REGISTRY_USERNAME }} --password-stdin $REGISTRY
             
