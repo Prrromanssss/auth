@@ -140,7 +140,12 @@ jobs:
           path: .
 
       - name: Source tag names and export to environment
-        run: source tag_names.env
+        run: |
+          source tag_names.env
+          echo "AUTH_TAG_NAME=$AUTH_TAG_NAME" >> $GITHUB_ENV
+          echo "AUTH_MIGRATOR_TAG_NAME=$AUTH_MIGRATOR_TAG_NAME" >> $GITHUB_ENV
+          export AUTH_TAG_NAME=$AUTH_TAG_NAME
+          export AUTH_MIGRATOR_TAG_NAME=$AUTH_MIGRATOR_TAG_NAME
 
       - name: Deploy to Selectel Cloud via SSH action
         uses: appleboy/ssh-action@v1.0.0
