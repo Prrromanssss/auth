@@ -9,13 +9,13 @@ import (
 	pb "github.com/Prrromanssss/auth/pkg/user_v1"
 )
 
+// MapHandlers initializes the repository and registers gRPC handlers with the server.
 func (s *Server) MapHandlers(ctx context.Context) error {
-	// repos
+	// Initialize repository
 	userRepo := user.NewPGRepo(s.pgDB)
 
-	// handlers
+	// Create and register gRPC handlers
 	GRPCHandlers := apiGRPC.NewGRPCHandlers(userRepo)
-
 	pb.RegisterUserV1Server(s.grpc, GRPCHandlers)
 
 	return nil
