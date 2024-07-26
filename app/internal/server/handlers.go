@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 
-	deliveryGRPC "github.com/Prrromanssss/auth/internal/delivery/grpc"
+	apiGRPC "github.com/Prrromanssss/auth/internal/api/grpc"
 	"github.com/Prrromanssss/auth/internal/repository/user"
 
 	pb "github.com/Prrromanssss/auth/pkg/user_v1"
@@ -14,7 +14,7 @@ func (s *Server) MapHandlers(ctx context.Context) error {
 	userRepo := user.NewPGRepo(s.pgDB)
 
 	// handlers
-	GRPCHandlers := deliveryGRPC.NewGRPCHandlers(userRepo)
+	GRPCHandlers := apiGRPC.NewGRPCHandlers(userRepo)
 
 	pb.RegisterUserV1Server(s.grpc, GRPCHandlers)
 

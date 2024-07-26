@@ -3,7 +3,7 @@ package user
 const (
 	queryUpdateUser = `
 		UPDATE users.user
-		SET name = COALESCE($2, name), role_id = $3, updated_at = now()
+		SET name = COALESCE(NULLIF($2, ''), name), role_id = $3, updated_at = now()
 		WHERE id = $1
 	`
 

@@ -2,8 +2,6 @@ package models
 
 import (
 	"time"
-
-	"github.com/guregu/null"
 )
 
 type CreateUserParams struct {
@@ -24,6 +22,6 @@ type GetUserResponse struct {
 
 type UpdateUserParams struct {
 	UserID int64
-	Name   null.String
+	Name   string
 	Role   int64
 }
