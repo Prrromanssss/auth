@@ -30,18 +30,15 @@ func NewGRPCHandlers(repo repository.UserRepository) pb.UserV1Server {
 func (h *GRPCHandlers) Create(ctx context.Context, req *pb.CreateRequest) (*pb.CreateResponse, error) {
 	log.Printf("rpc Create, request: %+v", req)
 
-	// Check if the provided passwords match
 	if req.Password != req.PasswordConfirm {
 		return nil, errors.New("passwords don't match")
 	}
 
-	// Hash the password
 	hashPassword, err := crypto.HashPassword(req.Password)
 	if err != nil {
 		return nil, err
 	}
 
-	// Create a new user in the repository
 	userID, err := h.repo.CreateUser(ctx, models.CreateUserParams{
 		Name:           req.Name,
 		Email:          req.Email,
@@ -61,7 +58,6 @@ func (h *GRPCHandlers) Create(ctx context.Context, req *pb.CreateRequest) (*pb.C
 func (h *GRPCHandlers) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	log.Printf("rpc Get, request: %+v", req)
 
-	// Fetch user details from the repository
 	resp, err := h.repo.GetUser(ctx, req.Id)
 	if err != nil {
 		return nil, err
@@ -81,7 +77,6 @@ func (h *GRPCHandlers) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResp
 func (h *GRPCHandlers) Update(ctx context.Context, req *pb.UpdateRequest) (*emptypb.Empty, error) {
 	log.Printf("rpc Update, request: %+v", req)
 
-	// Update user details in the repository
 	err := h.repo.UpdateUser(ctx, models.UpdateUserParams{
 		UserID: req.Id,
 		Name:   req.GetName().GetValue(),
@@ -98,7 +93,6 @@ func (h *GRPCHandlers) Update(ctx context.Context, req *pb.UpdateRequest) (*empt
 func (h *GRPCHandlers) Delete(ctx context.Context, req *pb.DeleteRequest) (*emptypb.Empty, error) {
 	log.Printf("rpc Delete, request: %+v", req)
 
-	// Delete user from the repository
 	err := h.repo.DeleteUser(ctx, req.Id)
 	if err != nil {
 		return nil, err
