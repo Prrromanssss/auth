@@ -8,7 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/Prrromanssss/auth/config"
-	"github.com/Prrromanssss/auth/internal/server"
+	"github.com/Prrromanssss/auth/internal/app"
 
 	_ "github.com/lib/pq"
 )
@@ -46,7 +46,7 @@ func main() {
 		}
 	}()
 
-	s := server.NewServer(
+	s := app.NewServer(
 		cfg,
 		db,
 	)

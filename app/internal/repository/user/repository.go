@@ -6,8 +6,10 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 
-	"github.com/Prrromanssss/auth/internal/models"
+	"github.com/Prrromanssss/auth/internal/model"
 	"github.com/Prrromanssss/auth/internal/repository"
+	"github.com/Prrromanssss/auth/internal/repository/user/converter"
+	modelRepo "github.com/Prrromanssss/auth/internal/repository/user/model"
 )
 
 type userPGRepo struct {
@@ -20,40 +22,60 @@ func NewPGRepo(db *sqlx.DB) repository.UserRepository {
 }
 
 // CreateUser inserts a new user into the database with the provided parameters.
-func (p *userPGRepo) CreateUser(ctx context.Context, params models.CreateUserParams) (userID int64, err error) {
-	err = p.db.GetContext(ctx, &userID, queryCreateUser, params.Name, params.Email, params.HashedPassword, params.Role)
+func (p *userPGRepo) CreateUser(
+	ctx context.Context,
+	params *model.CreateUserParams,
+) (resp *model.CreateUserResponse, err error) {
+	paramsRepo := converter.CreateUserParamsFromServiceToRepo(params)
+
+	var respRepo modelRepo.CreateUserResponse
+
+	err = p.db.GetContext(ctx, &respRepo, queryCreateUser, paramsRepo)
 	if err != nil {
-		return 0, errors.Wrap(
+		return resp, errors.Wrapf(
 			err,
-			"userPGRepo.CreateUser.GetContext.queryCreateUser",
+			"userPGRepo.CreateUser.GetContext.queryCreateUser(email: %s)",
+			paramsRepo.Email,
 		)
 	}
 
-	return userID, nil
+	return converter.CreateUserResponseFromRepoToService(&respRepo), nil
 }
 
 // GetUser retrieves a user from the database by their ID.
-func (p *userPGRepo) GetUser(ctx context.Context, userID int64) (resp models.GetUserResponse, err error) {
-	err = p.db.GetContext(ctx, &resp, queryGetUser, userID)
+func (p *userPGRepo) GetUser(
+	ctx context.Context,
+	params *model.GetUserParams,
+) (resp *model.GetUserResponse, err error) {
+	paramsRepo := converter.GetUserParamsFromServiceToRepo(params)
+
+	var respRepo modelRepo.GetUserResponse
+
+	err = p.db.GetContext(ctx, &respRepo, queryGetUser, paramsRepo)
 	if err != nil {
 		return resp, errors.Wrapf(
 			err,
 			"userPGRepo.GetUser.GetContext.queryGetUser(userID: %d)",
-			userID,
+			paramsRepo.UserID,
 		)
 	}
 
-	return resp, nil
+	return converter.GetUserResponseFromRepoToService(&respRepo), nil
 }
 
 // UpdateUser modifies the details of an existing user in the database.
-func (p *userPGRepo) UpdateUser(ctx context.Context, params models.UpdateUserParams) (err error) {
-	_, err = p.db.ExecContext(ctx, queryUpdateUser, params.UserID, params.Name, params.Role)
+func (p *userPGRepo) UpdateUser(
+	ctx context.Context,
+	params *model.UpdateUserParams,
+) (err error) {
+	paramsRepo := converter.UpdateUserParamsFromServiceToRepo(params)
+
+	_, err = p.db.ExecContext(ctx, queryUpdateUser, paramsRepo)
 	if err != nil {
 		return errors.Wrapf(
 			err,
 			"userPGRepo.UpdateUser.ExecContext.queryUpdateUser(userID: %d)",
-			params.UserID,
+			paramsRepo.UserID,
 		)
 	}
 
@@ -61,13 +83,18 @@ func (p *userPGRepo) UpdateUser(ctx context.Context, params models.UpdateUserPar
 }
 
 // DeleteUser removes a user from the database by their ID.
-func (p *userPGRepo) DeleteUser(ctx context.Context, userID int64) (err error) {
-	_, err = p.db.ExecContext(ctx, queryDeleteUser, userID)
+func (p *userPGRepo) DeleteUser(
+	ctx context.Context,
+	params *model.DeleteUserParams,
+) (err error) {
+	paramsRepo := converter.DeleteUserParamsFromServiceToRepo(params)
+
+	_, err = p.db.ExecContext(ctx, queryDeleteUser, paramsRepo)
 	if err != nil {
 		return errors.Wrapf(
 			err,
 			"userPGRepo.DeleteUser.ExecContext.queryDeleteUser(userID: %d)",
-			userID,
+			paramsRepo.UserID,
 		)
 	}
 

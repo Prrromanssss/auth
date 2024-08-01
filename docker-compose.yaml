@@ -11,7 +11,7 @@ services:
     depends_on:
       - auth-pg
     ports:
-      - "50052:50052"
+      - "${AUTH_OUTER_PORT}:50052"
     environment:
       - CONFIG_PATH=/config.yaml
 
@@ -20,7 +20,7 @@ services:
     env_file:
       - ".env"
     ports:
-      - "54322:5432"
+      - "${POSTGRES_OUTER_PORT}:5432"
     volumes:
       - postgres_volume_local:/var/lib/postgresql/data
 
