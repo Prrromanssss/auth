@@ -3,8 +3,8 @@ package grpc
 import (
 	"context"
 	"errors"
-	"log"
 
+	"github.com/gofiber/fiber/v2/log"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/Prrromanssss/auth/internal/converter"
@@ -22,12 +22,16 @@ type GRPCHandlers struct {
 
 // NewGRPCHandlers creates a new instance of GRPCHandlers with the provided UserService.
 func NewGRPCHandlers(userService service.UserService) *GRPCHandlers {
-	return &GRPCHandlers{userService: userService}
+	return &GRPCHandlers{
+		userService: userService,
+	}
 }
 
 // Create handles the request for creating a new user.
 func (h *GRPCHandlers) Create(ctx context.Context, req *pb.CreateRequest) (*pb.CreateResponse, error) {
-	log.Printf("rpc Create, request: %+v", req)
+	log.Infof("rpc Create, request: %+v", req)
+
+	log.Info(h.userService)
 
 	if req.Password != req.PasswordConfirm {
 		return nil, errors.New("passwords don't match")
@@ -50,7 +54,7 @@ func (h *GRPCHandlers) Create(ctx context.Context, req *pb.CreateRequest) (*pb.C
 
 // Get handles the request for retrieving user data.
 func (h *GRPCHandlers) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	log.Printf("rpc Get, request: %+v", req)
+	log.Infof("rpc Get, request: %+v", req)
 
 	resp, err := h.userService.GetUser(ctx, converter.ConvertGetRequestFromHandlerToService(req))
 	if err != nil {
@@ -62,7 +66,7 @@ func (h *GRPCHandlers) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResp
 
 // Update handles the request for updating user data.
 func (h *GRPCHandlers) Update(ctx context.Context, req *pb.UpdateRequest) (*emptypb.Empty, error) {
-	log.Printf("rpc Update, request: %+v", req)
+	log.Infof("rpc Update, request: %+v", req)
 
 	err := h.userService.UpdateUser(ctx, converter.ConvertUpdateRequestFromHandlerToService(req))
 	if err != nil {
@@ -74,7 +78,7 @@ func (h *GRPCHandlers) Update(ctx context.Context, req *pb.UpdateRequest) (*empt
 
 // Delete handles the request for deleting a user.
 func (h *GRPCHandlers) Delete(ctx context.Context, req *pb.DeleteRequest) (*emptypb.Empty, error) {
-	log.Printf("rpc Delete, request: %+v", req)
+	log.Infof("rpc Delete, request: %+v", req)
 
 	err := h.userService.DeleteUser(ctx, converter.ConvertDeleteRequestFromHandlerToService(req))
 	if err != nil {

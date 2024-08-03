@@ -3,6 +3,8 @@ package user
 import (
 	"context"
 
+	"github.com/gofiber/fiber/v2/log"
+
 	"github.com/Prrromanssss/auth/internal/model"
 	"github.com/Prrromanssss/auth/internal/repository"
 	"github.com/Prrromanssss/auth/internal/service"
@@ -22,11 +24,13 @@ func NewService(userRepository repository.UserRepository) service.UserService {
 // CreateUser creates a new user using the provided CreateUserParams.
 func (s *userService) CreateUser(
 	ctx context.Context,
-	params *model.CreateUserParams,
-) (resp *model.CreateUserResponse, err error) {
+	params model.CreateUserParams,
+) (resp model.CreateUserResponse, err error) {
+	log.Infof("userService.CreateUser, params: %+v", params)
+
 	resp, err = s.userRepository.CreateUser(ctx, params)
 	if err != nil {
-		return nil, err
+		return model.CreateUserResponse{}, err
 	}
 
 	return resp, nil
@@ -35,11 +39,13 @@ func (s *userService) CreateUser(
 // GetUser retrieves a user's information based on the provided GetUserParams.
 func (s *userService) GetUser(
 	ctx context.Context,
-	params *model.GetUserParams,
-) (resp *model.GetUserResponse, err error) {
+	params model.GetUserParams,
+) (resp model.GetUserResponse, err error) {
+	log.Infof("userService.GetUser, params: %+v", params)
+
 	resp, err = s.userRepository.GetUser(ctx, params)
 	if err != nil {
-		return nil, err
+		return model.GetUserResponse{}, err
 	}
 
 	return resp, nil
@@ -48,8 +54,10 @@ func (s *userService) GetUser(
 // UpdateUser updates an existing user's information based on the provided UpdateUserParams.
 func (s *userService) UpdateUser(
 	ctx context.Context,
-	params *model.UpdateUserParams,
+	params model.UpdateUserParams,
 ) (err error) {
+	log.Infof("userService.UpdateUser, params: %+v", params)
+
 	err = s.userRepository.UpdateUser(ctx, params)
 	if err != nil {
 		return err
@@ -61,8 +69,10 @@ func (s *userService) UpdateUser(
 // DeleteUser deletes a user based on the provided DeleteUserParams.
 func (s *userService) DeleteUser(
 	ctx context.Context,
-	params *model.DeleteUserParams,
+	params model.DeleteUserParams,
 ) (err error) {
+	log.Infof("userService.DeleteUser, params: %+v", params)
+
 	err = s.userRepository.DeleteUser(ctx, params)
 	if err != nil {
 		return err

@@ -8,8 +8,8 @@ import (
 )
 
 // ConvertCreateUserParamsFromServiceToRepo converts CreateUserParams from the service layer to the repository layer.
-func ConvertCreateUserParamsFromServiceToRepo(params *model.CreateUserParams) *modelRepo.CreateUserParams {
-	return &modelRepo.CreateUserParams{
+func ConvertCreateUserParamsFromServiceToRepo(params model.CreateUserParams) modelRepo.CreateUserParams {
+	return modelRepo.CreateUserParams{
 		Name:           params.Name,
 		Email:          params.Email,
 		HashedPassword: params.HashedPassword,
@@ -18,22 +18,22 @@ func ConvertCreateUserParamsFromServiceToRepo(params *model.CreateUserParams) *m
 }
 
 // ConvertCreateUserResponseFromRepoToService converts CreateUserResponse from the repository layer to the service layer.
-func ConvertCreateUserResponseFromRepoToService(params *modelRepo.CreateUserResponse) *model.CreateUserResponse {
-	return &model.CreateUserResponse{
+func ConvertCreateUserResponseFromRepoToService(params modelRepo.CreateUserResponse) model.CreateUserResponse {
+	return model.CreateUserResponse{
 		UserID: params.UserID,
 	}
 }
 
 // ConvertGetUserParamsFromServiceToRepo converts GetUserParams from the service layer to the repository layer.
-func ConvertGetUserParamsFromServiceToRepo(params *model.GetUserParams) *modelRepo.GetUserParams {
-	return &modelRepo.GetUserParams{
+func ConvertGetUserParamsFromServiceToRepo(params model.GetUserParams) modelRepo.GetUserParams {
+	return modelRepo.GetUserParams{
 		UserID: params.UserID,
 	}
 }
 
 // ConvertGetUserResponseFromRepoToService converts GetUserResponse from the repository layer to the service layer.
-func ConvertGetUserResponseFromRepoToService(params *modelRepo.GetUserResponse) *model.GetUserResponse {
-	return &model.GetUserResponse{
+func ConvertGetUserResponseFromRepoToService(params modelRepo.GetUserResponse) model.GetUserResponse {
+	return model.GetUserResponse{
 		UserID:    params.UserID,
 		Name:      params.Name,
 		Email:     params.Email,
@@ -44,7 +44,7 @@ func ConvertGetUserResponseFromRepoToService(params *modelRepo.GetUserResponse) 
 }
 
 // ConvertUpdateUserParamsFromServiceToRepo converts UpdateUserParams from the service layer to the repository layer.
-func ConvertUpdateUserParamsFromServiceToRepo(params *model.UpdateUserParams) *modelRepo.UpdateUserParams {
+func ConvertUpdateUserParamsFromServiceToRepo(params model.UpdateUserParams) modelRepo.UpdateUserParams {
 	var name sql.NullString
 	if params.Name != nil {
 		name.String = *params.Name
@@ -54,7 +54,7 @@ func ConvertUpdateUserParamsFromServiceToRepo(params *model.UpdateUserParams) *m
 		name.Valid = false
 	}
 
-	return &modelRepo.UpdateUserParams{
+	return modelRepo.UpdateUserParams{
 		UserID: params.UserID,
 		Name:   name,
 		Role:   params.Role,
@@ -62,8 +62,8 @@ func ConvertUpdateUserParamsFromServiceToRepo(params *model.UpdateUserParams) *m
 }
 
 // ConvertDeleteUserParamsFromServiceToRepo converts DeleteUserParams from the service layer to the repository layer.
-func ConvertDeleteUserParamsFromServiceToRepo(params *model.DeleteUserParams) *modelRepo.DeleteUserParams {
-	return &modelRepo.DeleteUserParams{
+func ConvertDeleteUserParamsFromServiceToRepo(params model.DeleteUserParams) modelRepo.DeleteUserParams {
+	return modelRepo.DeleteUserParams{
 		UserID: params.UserID,
 	}
 }

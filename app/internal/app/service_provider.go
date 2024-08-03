@@ -31,7 +31,7 @@ func newServiceProvider(cfg *config.Config) *serviceProvider {
 }
 
 func (s *serviceProvider) DBClient() *sqlx.DB {
-	if s.db != nil {
+	if s.db == nil {
 		db, err := sqlx.Connect("postgres", s.cfg.Postgres.DSN())
 		if err != nil {
 			log.Panic(err)
@@ -46,7 +46,7 @@ func (s *serviceProvider) DBClient() *sqlx.DB {
 }
 
 func (s *serviceProvider) UserRepository() repository.UserRepository {
-	if s.userRepository != nil {
+	if s.userRepository == nil {
 		s.userRepository = userRepository.NewRepository(s.DBClient())
 	}
 
@@ -54,7 +54,7 @@ func (s *serviceProvider) UserRepository() repository.UserRepository {
 }
 
 func (s *serviceProvider) UserService() service.UserService {
-	if s.userService != nil {
+	if s.userService == nil {
 		s.userService = userService.NewService(s.UserRepository())
 	}
 
@@ -62,7 +62,7 @@ func (s *serviceProvider) UserService() service.UserService {
 }
 
 func (s *serviceProvider) UserAPI() *userAPI.GRPCHandlers {
-	if s.userAPI != nil {
+	if s.userAPI == nil {
 		s.userAPI = userAPI.NewGRPCHandlers(s.UserService())
 	}
 
