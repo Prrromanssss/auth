@@ -56,7 +56,6 @@ func (s *userService) CreateUser(
 		responseDataString := string(responseData)
 
 		txErr = s.userRepository.CreateAPILog(ctx, model.CreateAPILogParams{
-			UserID:       &resp.UserID,
 			Method:       "Create",
 			RequestData:  string(requestData),
 			ResponseData: &responseDataString,
@@ -102,7 +101,6 @@ func (s *userService) GetUser(
 		responseDataString := string(responseData)
 
 		txErr = s.userRepository.CreateAPILog(ctx, model.CreateAPILogParams{
-			UserID:       &params.UserID,
 			Method:       "Get",
 			RequestData:  string(requestData),
 			ResponseData: &responseDataString,
@@ -142,7 +140,6 @@ func (s *userService) UpdateUser(
 		}
 
 		txErr = s.userRepository.CreateAPILog(ctx, model.CreateAPILogParams{
-			UserID:       &params.UserID,
 			Method:       "Update",
 			RequestData:  string(requestData),
 			ResponseData: responseData,
@@ -182,7 +179,6 @@ func (s *userService) DeleteUser(
 		}
 
 		txErr = s.userRepository.CreateAPILog(ctx, model.CreateAPILogParams{
-			UserID:       &params.UserID,
 			Method:       "Delete",
 			RequestData:  string(requestData),
 			ResponseData: responseData,

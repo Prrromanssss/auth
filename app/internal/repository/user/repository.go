@@ -144,7 +144,7 @@ func (p *userPGRepo) CreateAPILog(
 		QueryRaw: queryCreateAPILog,
 	}
 
-	_, err = p.db.DB().ExecContext(ctx, q, paramsRepo.UserID, paramsRepo.Method, paramsRepo.RequestData, paramsRepo.ResponseData)
+	_, err = p.db.DB().ExecContext(ctx, q, paramsRepo.Method, paramsRepo.RequestData, paramsRepo.ResponseData)
 	if err != nil {
 		return errors.Wrapf(
 			err,

@@ -34,8 +34,8 @@ const (
 
 	queryCreateAPILog = `
 		INSERT INTO users.api_user_log
-			(user_id, action_type, request_data, response_data)
+			(action_type, request_data, response_data)
 		VALUES
-			($1, $2, $3, $4);
+			($1, $2, $3);
 	`
 )

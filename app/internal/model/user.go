@@ -46,7 +46,6 @@ type DeleteUserParams struct {
 
 // CreateAPILogParams holds the parameters for logging API actions related to user creation.
 type CreateAPILogParams struct {
-	UserID       *int64
 	Method       string
 	RequestData  string
 	ResponseData *string

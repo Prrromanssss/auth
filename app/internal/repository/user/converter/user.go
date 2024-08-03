@@ -68,14 +68,7 @@ func ConvertDeleteUserParamsFromServiceToRepo(params model.DeleteUserParams) mod
 }
 
 func ConvertCreateAPILogParamsFromServiceToRepo(params model.CreateAPILogParams) modelRepo.CreateAPILogParams {
-	var userID sql.NullInt64
 	var responseData sql.NullString
-
-	if params.UserID != nil {
-		userID = sql.NullInt64{Int64: *params.UserID, Valid: true}
-	} else {
-		userID = sql.NullInt64{Int64: 0, Valid: false}
-	}
 
 	if params.ResponseData != nil {
 		responseData = sql.NullString{String: *params.ResponseData, Valid: true}
@@ -84,7 +77,6 @@ func ConvertCreateAPILogParamsFromServiceToRepo(params model.CreateAPILogParams)
 	}
 
 	return modelRepo.CreateAPILogParams{
-		UserID:       userID,
 		Method:       params.Method,
 		RequestData:  params.RequestData,
 		ResponseData: responseData,
