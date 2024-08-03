@@ -44,3 +44,11 @@ type UpdateUserParams struct {
 type DeleteUserParams struct {
 	UserID int64 `db:"id"`
 }
+
+// CreateAPILogParams holds the parameters for logging API actions related to user creation.
+type CreateAPILogParams struct {
+	UserID       sql.NullInt64  `db:"user_id"`
+	Method       string         `db:"action_type"`
+	RequestData  string         `db:"request_data"`
+	ResponseData sql.NullString `db:"response_data"`
+}

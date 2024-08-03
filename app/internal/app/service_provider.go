@@ -8,6 +8,7 @@ import (
 	userAPI "github.com/Prrromanssss/auth/internal/api/grpc/user"
 	"github.com/Prrromanssss/auth/internal/client/db"
 	"github.com/Prrromanssss/auth/internal/client/db/pg"
+	"github.com/Prrromanssss/auth/internal/client/db/transaction"
 	"github.com/Prrromanssss/auth/internal/repository"
 	userRepository "github.com/Prrromanssss/auth/internal/repository/user"
 	"github.com/Prrromanssss/auth/internal/service"
@@ -18,7 +19,8 @@ import (
 type serviceProvider struct {
 	cfg *config.Config
 
-	db db.Client
+	db        db.Client
+	txManager db.TxManager
 
 	userRepository repository.UserRepository
 	userService    service.UserService
@@ -60,7 +62,10 @@ func (s *serviceProvider) UserRepository(ctx context.Context) repository.UserRep
 
 func (s *serviceProvider) UserService(ctx context.Context) service.UserService {
 	if s.userService == nil {
-		s.userService = userService.NewService(s.UserRepository(ctx))
+		s.userService = userService.NewService(
+			s.UserRepository(ctx),
+			s.TxManager(ctx),
+		)
 	}
 
 	return s.userService
@@ -72,4 +77,12 @@ func (s *serviceProvider) UserAPI(ctx context.Context) *userAPI.GRPCHandlers {
 	}
 
 	return s.userAPI
+}
+
+func (s *serviceProvider) TxManager(ctx context.Context) db.TxManager {
+	if s.txManager == nil {
+		s.txManager = transaction.NewTransactionManager(s.DBClient(ctx).DB())
+	}
+
+	return s.txManager
 }

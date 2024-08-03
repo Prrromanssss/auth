@@ -19,4 +19,7 @@ type UserRepository interface {
 
 	// DeleteUser removes a user by ID and returns any error.
 	DeleteUser(ctx context.Context, params model.DeleteUserParams) (err error)
+
+	// CreateAPILog creates log in database of every api action and returns any error..
+	CreateAPILog(ctx context.Context, params model.CreateAPILogParams) (err error)
 }

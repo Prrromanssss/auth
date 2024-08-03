@@ -129,3 +129,28 @@ func (p *userPGRepo) DeleteUser(
 
 	return nil
 }
+
+// CreateAPILog creates log in database of every api action.
+func (p *userPGRepo) CreateAPILog(
+	ctx context.Context,
+	params model.CreateAPILogParams,
+) (err error) {
+	log.Infof("userPGRepo.CreateAPILog, params: %+v", params)
+
+	paramsRepo := converter.ConvertCreateAPILogParamsFromServiceToRepo(params)
+
+	q := db.Query{
+		Name:     "userPGRepo.CreateAPILog",
+		QueryRaw: queryCreateAPILog,
+	}
+
+	_, err = p.db.DB().ExecContext(ctx, q, paramsRepo.UserID, paramsRepo.Method, paramsRepo.RequestData, paramsRepo.ResponseData)
+	if err != nil {
+		return errors.Wrapf(
+			err,
+			"userPGRepo.CreateAPILog.DB.ExecContext.queryCreateAPILog",
+		)
+	}
+
+	return nil
+}

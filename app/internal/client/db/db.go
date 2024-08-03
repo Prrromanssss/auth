@@ -16,11 +16,21 @@ type Client interface {
 	Close() error
 }
 
+// TxManager is a transaction manager that executes a user-specified handler within a transaction.
+type TxManager interface {
+	ReadCommitted(ctx context.Context, f Handler) error
+}
+
 // Query is a wrapper for a query that stores the query name and the query itself.
 // The query name is used for logging and potentially for other purposes, such as tracing.
 type Query struct {
 	Name     string
 	QueryRaw string
+}
+
+// Transactor is an interface for working with transactions.
+type Transactor interface {
+	BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error)
 }
 
 // SQLExecer combines the NamedExecer and QueryExecer interfaces.
@@ -51,5 +61,6 @@ type Pinger interface {
 type DB interface {
 	SQLExecer
 	Pinger
+	Transactor
 	Close()
 }

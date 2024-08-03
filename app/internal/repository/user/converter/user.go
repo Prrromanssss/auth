@@ -46,12 +46,11 @@ func ConvertGetUserResponseFromRepoToService(params modelRepo.GetUserResponse) m
 // ConvertUpdateUserParamsFromServiceToRepo converts UpdateUserParams from the service layer to the repository layer.
 func ConvertUpdateUserParamsFromServiceToRepo(params model.UpdateUserParams) modelRepo.UpdateUserParams {
 	var name sql.NullString
+
 	if params.Name != nil {
-		name.String = *params.Name
-		name.Valid = true
+		name = sql.NullString{String: *params.Name, Valid: true}
 	} else {
-		name.String = ""
-		name.Valid = false
+		name = sql.NullString{String: "", Valid: false}
 	}
 
 	return modelRepo.UpdateUserParams{
@@ -65,5 +64,29 @@ func ConvertUpdateUserParamsFromServiceToRepo(params model.UpdateUserParams) mod
 func ConvertDeleteUserParamsFromServiceToRepo(params model.DeleteUserParams) modelRepo.DeleteUserParams {
 	return modelRepo.DeleteUserParams{
 		UserID: params.UserID,
+	}
+}
+
+func ConvertCreateAPILogParamsFromServiceToRepo(params model.CreateAPILogParams) modelRepo.CreateAPILogParams {
+	var userID sql.NullInt64
+	var responseData sql.NullString
+
+	if params.UserID != nil {
+		userID = sql.NullInt64{Int64: *params.UserID, Valid: true}
+	} else {
+		userID = sql.NullInt64{Int64: 0, Valid: false}
+	}
+
+	if params.ResponseData != nil {
+		responseData = sql.NullString{String: *params.ResponseData, Valid: true}
+	} else {
+		responseData = sql.NullString{String: "", Valid: false}
+	}
+
+	return modelRepo.CreateAPILogParams{
+		UserID:       userID,
+		Method:       params.Method,
+		RequestData:  params.RequestData,
+		ResponseData: responseData,
 	}
 }
