@@ -26,7 +26,7 @@ func (p *userPGRepo) CreateUser(
 	ctx context.Context,
 	params *model.CreateUserParams,
 ) (resp *model.CreateUserResponse, err error) {
-	paramsRepo := converter.CreateUserParamsFromServiceToRepo(params)
+	paramsRepo := converter.ConvertCreateUserParamsFromServiceToRepo(params)
 
 	var respRepo modelRepo.CreateUserResponse
 
@@ -39,7 +39,7 @@ func (p *userPGRepo) CreateUser(
 		)
 	}
 
-	return converter.CreateUserResponseFromRepoToService(&respRepo), nil
+	return converter.ConvertCreateUserResponseFromRepoToService(&respRepo), nil
 }
 
 // GetUser retrieves a user from the database by their ID.
@@ -47,7 +47,7 @@ func (p *userPGRepo) GetUser(
 	ctx context.Context,
 	params *model.GetUserParams,
 ) (resp *model.GetUserResponse, err error) {
-	paramsRepo := converter.GetUserParamsFromServiceToRepo(params)
+	paramsRepo := converter.ConvertGetUserParamsFromServiceToRepo(params)
 
 	var respRepo modelRepo.GetUserResponse
 
@@ -60,7 +60,7 @@ func (p *userPGRepo) GetUser(
 		)
 	}
 
-	return converter.GetUserResponseFromRepoToService(&respRepo), nil
+	return converter.ConvertGetUserResponseFromRepoToService(&respRepo), nil
 }
 
 // UpdateUser modifies the details of an existing user in the database.
@@ -68,7 +68,7 @@ func (p *userPGRepo) UpdateUser(
 	ctx context.Context,
 	params *model.UpdateUserParams,
 ) (err error) {
-	paramsRepo := converter.UpdateUserParamsFromServiceToRepo(params)
+	paramsRepo := converter.ConvertUpdateUserParamsFromServiceToRepo(params)
 
 	_, err = p.db.ExecContext(ctx, queryUpdateUser, paramsRepo)
 	if err != nil {
@@ -87,7 +87,7 @@ func (p *userPGRepo) DeleteUser(
 	ctx context.Context,
 	params *model.DeleteUserParams,
 ) (err error) {
-	paramsRepo := converter.DeleteUserParamsFromServiceToRepo(params)
+	paramsRepo := converter.ConvertDeleteUserParamsFromServiceToRepo(params)
 
 	_, err = p.db.ExecContext(ctx, queryDeleteUser, paramsRepo)
 	if err != nil {

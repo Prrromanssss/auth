@@ -12,10 +12,12 @@ type CreateUserParams struct {
 	Role           int64
 }
 
+// CreateUserResponse represents the response after creating a user, containing the user's ID.
 type CreateUserResponse struct {
 	UserID int64
 }
 
+// GetUserParams holds the parameters for retrieving a user by ID.
 type GetUserParams struct {
 	UserID int64
 }
@@ -37,6 +39,7 @@ type UpdateUserParams struct {
 	Role   int64
 }
 
+// DeleteUserParams holds the parameters for deleting a user by ID.
 type DeleteUserParams struct {
 	UserID int64
 }

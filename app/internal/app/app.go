@@ -18,19 +18,19 @@ import (
 
 // Server holds the configuration, gRPC server instance, and PostgreSQL database connection.
 type Server struct {
-	cfg  *config.Config // Configuration settings
-	grpc *grpc.Server   // gRPC server instance
-	pgDB *sqlx.DB       // PostgreSQL database connection
+	cfg  *config.Config
+	grpc *grpc.Server
+	pgDB *sqlx.DB
 }
 
 // NewServer creates a new Server instance with the provided configuration and database connection.
 func NewServer(
-	cfg *config.Config, // Configuration for the server
-	database *sqlx.DB, // Database connection
+	cfg *config.Config,
+	database *sqlx.DB,
 ) *Server {
 	return &Server{
 		cfg:  cfg,
-		grpc: grpc.NewServer(), // Initialize gRPC server
+		grpc: grpc.NewServer(),
 		pgDB: database,
 	}
 }
@@ -43,7 +43,6 @@ func (s *Server) Run(ctx context.Context, cancel context.CancelFunc) error {
 	}
 
 	go func() {
-		// Start listening for incoming gRPC requests
 		listener, err := net.Listen(
 			"tcp",
 			fmt.Sprintf("%s:%s", s.cfg.GRPC.Host, s.cfg.GRPC.Port),

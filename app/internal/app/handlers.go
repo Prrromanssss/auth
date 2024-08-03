@@ -15,8 +15,8 @@ func (s *Server) MapHandlers(ctx context.Context) error {
 	userRepo := user.NewPGRepo(s.pgDB)
 
 	// Create and register gRPC handlers
-	GRPCHandlers := userAPI.NewGRPCHandlers(userRepo)
-	pb.RegisterUserV1Server(s.grpc, GRPCHandlers)
+	gRPCHandlers := userAPI.NewGRPCHandlers(userRepo)
+	pb.RegisterUserV1Server(s.grpc, gRPCHandlers)
 
 	return nil
 }

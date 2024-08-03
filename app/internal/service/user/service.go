@@ -12,14 +12,14 @@ type userService struct {
 	userRepository repository.UserRepository
 }
 
-func NewService(
-	userRepository repository.UserRepository,
-) service.UserService {
+// NewService creates a new instance of userService with the provided UserRepository.
+func NewService(userRepository repository.UserRepository) service.UserService {
 	return &userService{
 		userRepository: userRepository,
 	}
 }
 
+// CreateUser creates a new user using the provided CreateUserParams.
 func (s *userService) CreateUser(
 	ctx context.Context,
 	params *model.CreateUserParams,
@@ -32,6 +32,7 @@ func (s *userService) CreateUser(
 	return resp, nil
 }
 
+// GetUser retrieves a user's information based on the provided GetUserParams.
 func (s *userService) GetUser(
 	ctx context.Context,
 	params *model.GetUserParams,
@@ -44,6 +45,7 @@ func (s *userService) GetUser(
 	return resp, nil
 }
 
+// UpdateUser updates an existing user's information based on the provided UpdateUserParams.
 func (s *userService) UpdateUser(
 	ctx context.Context,
 	params *model.UpdateUserParams,
@@ -56,6 +58,7 @@ func (s *userService) UpdateUser(
 	return nil
 }
 
+// DeleteUser deletes a user based on the provided DeleteUserParams.
 func (s *userService) DeleteUser(
 	ctx context.Context,
 	params *model.DeleteUserParams,

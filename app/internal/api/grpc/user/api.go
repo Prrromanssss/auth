@@ -6,27 +6,26 @@ import (
 	"log"
 
 	"google.golang.org/protobuf/types/known/emptypb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/Prrromanssss/auth/internal/models"
-	"github.com/Prrromanssss/auth/internal/repository"
+	"github.com/Prrromanssss/auth/internal/converter"
+	"github.com/Prrromanssss/auth/internal/service"
 	"github.com/Prrromanssss/auth/pkg/crypto"
 	pb "github.com/Prrromanssss/auth/pkg/user_v1"
 )
 
-// GRPCHandlers implements the gRPC server for user operations using a UserRepository.
+// GRPCHandlers represents the gRPC handlers that implement the UserV1Server interface
+// and use the UserService for business logic operations.
 type GRPCHandlers struct {
-	pb.UnimplementedUserV1Server                           // Embeds the unimplemented server for backward compatibility.
-	repo                         repository.UserRepository // User repository for data operations.
+	pb.UnimplementedUserV1Server
+	userService service.UserService
 }
 
-// NewGRPCHandlers creates a new instance of GRPCHandlers with the provided user repository.
-func NewGRPCHandlers(repo repository.UserRepository) pb.UserV1Server {
-	return &GRPCHandlers{repo: repo}
+// NewGRPCHandlers creates a new instance of GRPCHandlers with the provided UserService.
+func NewGRPCHandlers(userService service.UserService) pb.UserV1Server {
+	return &GRPCHandlers{userService: userService}
 }
 
-// Create handles the creation of a new user. It checks if passwords match,
-// hashes the password, and saves the user to the repository.
+// Create handles the request for creating a new user.
 func (h *GRPCHandlers) Create(ctx context.Context, req *pb.CreateRequest) (*pb.CreateResponse, error) {
 	log.Printf("rpc Create, request: %+v", req)
 
@@ -39,49 +38,33 @@ func (h *GRPCHandlers) Create(ctx context.Context, req *pb.CreateRequest) (*pb.C
 		return nil, err
 	}
 
-	userID, err := h.repo.CreateUser(ctx, models.CreateUserParams{
-		Name:           req.Name,
-		Email:          req.Email,
-		Role:           int64(req.Role),
-		HashedPassword: hashPassword,
-	})
+	req.Password = hashPassword
+
+	resp, err := h.userService.CreateUser(ctx, converter.ConvertCreateRequestFromHandlerToService(req))
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb.CreateResponse{
-		Id: userID,
-	}, nil
+	return converter.ConvertCreateUserResponseFromServiceToHandler(resp), nil
 }
 
-// Get retrieves a user by their ID and returns their details.
+// Get handles the request for retrieving user data.
 func (h *GRPCHandlers) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	log.Printf("rpc Get, request: %+v", req)
 
-	resp, err := h.repo.GetUser(ctx, req.Id)
+	resp, err := h.userService.GetUser(ctx, converter.ConvertGetRequestFromHandlerToService(req))
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb.GetResponse{
-		Id:        resp.UserID,
-		Name:      resp.Name,
-		Email:     resp.Email,
-		Role:      pb.Role(resp.Role),
-		CreatedAt: timestamppb.New(resp.CreatedAt),
-		UpdatedAt: timestamppb.New(resp.UpdatedAt),
-	}, nil
+	return converter.ConvertGetUserResponseFromHandlerToService(resp), nil
 }
 
-// Update modifies the details of an existing user.
+// Update handles the request for updating user data.
 func (h *GRPCHandlers) Update(ctx context.Context, req *pb.UpdateRequest) (*emptypb.Empty, error) {
 	log.Printf("rpc Update, request: %+v", req)
 
-	err := h.repo.UpdateUser(ctx, models.UpdateUserParams{
-		UserID: req.Id,
-		Name:   req.GetName().GetValue(),
-		Role:   int64(req.Role),
-	})
+	err := h.userService.UpdateUser(ctx, converter.ConvertUpdateRequestFromHandlerToService(req))
 	if err != nil {
 		return nil, err
 	}
@@ -89,11 +72,11 @@ func (h *GRPCHandlers) Update(ctx context.Context, req *pb.UpdateRequest) (*empt
 	return &emptypb.Empty{}, nil
 }
 
-// Delete removes a user from the repository by their ID.
+// Delete handles the request for deleting a user.
 func (h *GRPCHandlers) Delete(ctx context.Context, req *pb.DeleteRequest) (*emptypb.Empty, error) {
 	log.Printf("rpc Delete, request: %+v", req)
 
-	err := h.repo.DeleteUser(ctx, req.Id)
+	err := h.userService.DeleteUser(ctx, converter.ConvertDeleteRequestFromHandlerToService(req))
 	if err != nil {
 		return nil, err
 	}
