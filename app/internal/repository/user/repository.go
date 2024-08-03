@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/gofiber/fiber/v2/log"
-	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 
+	"github.com/Prrromanssss/auth/internal/client/db"
 	"github.com/Prrromanssss/auth/internal/model"
 	"github.com/Prrromanssss/auth/internal/repository"
 	"github.com/Prrromanssss/auth/internal/repository/user/converter"
@@ -14,11 +14,11 @@ import (
 )
 
 type userPGRepo struct {
-	db *sqlx.DB
+	db db.Client
 }
 
 // NewRepository creates a new instance of userPGRepo with the provided database connection.
-func NewRepository(db *sqlx.DB) repository.UserRepository {
+func NewRepository(db db.Client) repository.UserRepository {
 	return &userPGRepo{db: db}
 }
 
@@ -33,11 +33,16 @@ func (p *userPGRepo) CreateUser(
 
 	var respRepo modelRepo.CreateUserResponse
 
-	err = p.db.GetContext(ctx, &respRepo, queryCreateUser, paramsRepo.Name, paramsRepo.Email, params.HashedPassword, params.Role)
+	q := db.Query{
+		Name:     "userPGRepo.CreateUser",
+		QueryRaw: queryCreateUser,
+	}
+
+	err = p.db.DB().ScanOneContext(ctx, &respRepo, q, paramsRepo.Name, paramsRepo.Email, params.HashedPassword, params.Role)
 	if err != nil {
 		return resp, errors.Wrapf(
 			err,
-			"userPGRepo.CreateUser.GetContext.queryCreateUser(email: %s)",
+			"userPGRepo.CreateUser.DB.ScanOneContext.queryCreateUser(email: %s)",
 			paramsRepo.Email,
 		)
 	}
@@ -56,11 +61,16 @@ func (p *userPGRepo) GetUser(
 
 	var respRepo modelRepo.GetUserResponse
 
-	err = p.db.GetContext(ctx, &respRepo, queryGetUser, paramsRepo.UserID)
+	q := db.Query{
+		Name:     "userPGRepo.GetUser",
+		QueryRaw: queryGetUser,
+	}
+
+	err = p.db.DB().ScanOneContext(ctx, &respRepo, q, paramsRepo.UserID)
 	if err != nil {
 		return resp, errors.Wrapf(
 			err,
-			"userPGRepo.GetUser.GetContext.queryGetUser(userID: %d)",
+			"userPGRepo.GetUser.DB.ScanOneContext.queryGetUser(userID: %d)",
 			paramsRepo.UserID,
 		)
 	}
@@ -77,11 +87,16 @@ func (p *userPGRepo) UpdateUser(
 
 	paramsRepo := converter.ConvertUpdateUserParamsFromServiceToRepo(params)
 
-	_, err = p.db.ExecContext(ctx, queryUpdateUser, paramsRepo.UserID, paramsRepo.Name, paramsRepo.Role)
+	q := db.Query{
+		Name:     "userPGRepo.UpdateUser",
+		QueryRaw: queryUpdateUser,
+	}
+
+	_, err = p.db.DB().ExecContext(ctx, q, paramsRepo.UserID, paramsRepo.Name, paramsRepo.Role)
 	if err != nil {
 		return errors.Wrapf(
 			err,
-			"userPGRepo.UpdateUser.ExecContext.queryUpdateUser(userID: %d)",
+			"userPGRepo.UpdateUser.DB.ExecContext.queryUpdateUser(userID: %d)",
 			paramsRepo.UserID,
 		)
 	}
@@ -98,11 +113,16 @@ func (p *userPGRepo) DeleteUser(
 
 	paramsRepo := converter.ConvertDeleteUserParamsFromServiceToRepo(params)
 
-	_, err = p.db.ExecContext(ctx, queryDeleteUser, paramsRepo.UserID)
+	q := db.Query{
+		Name:     "userPGRepo.DeleteUser",
+		QueryRaw: queryDeleteUser,
+	}
+
+	_, err = p.db.DB().ExecContext(ctx, q, paramsRepo.UserID)
 	if err != nil {
 		return errors.Wrapf(
 			err,
-			"userPGRepo.DeleteUser.ExecContext.queryDeleteUser(userID: %d)",
+			"userPGRepo.DeleteUser.DB.ExecContext.queryDeleteUser(userID: %d)",
 			paramsRepo.UserID,
 		)
 	}

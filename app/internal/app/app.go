@@ -24,10 +24,10 @@ type App struct {
 	grpcServer      *grpc.Server
 }
 
-func NewApp() (*App, error) {
+func NewApp(ctx context.Context) (*App, error) {
 	a := &App{}
 
-	err := a.initDeps()
+	err := a.initDeps(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -35,15 +35,15 @@ func NewApp() (*App, error) {
 	return a, nil
 }
 
-func (a *App) initDeps() error {
-	inits := []func() error{
+func (a *App) initDeps(ctx context.Context) error {
+	inits := []func(ctx context.Context) error{
 		a.initConfig,
 		a.initServiceProvider,
 		a.initGRPCServer,
 	}
 
 	for _, f := range inits {
-		err := f()
+		err := f(ctx)
 		if err != nil {
 			return err
 		}
@@ -52,7 +52,7 @@ func (a *App) initDeps() error {
 	return nil
 }
 
-func (a *App) initConfig() error {
+func (a *App) initConfig(_ context.Context) error {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
@@ -65,18 +65,18 @@ func (a *App) initConfig() error {
 	return nil
 }
 
-func (a *App) initServiceProvider() error {
+func (a *App) initServiceProvider(_ context.Context) error {
 	a.serviceProvider = newServiceProvider(a.cfg)
 
 	return nil
 }
 
-func (a *App) initGRPCServer() error {
+func (a *App) initGRPCServer(ctx context.Context) error {
 	a.grpcServer = grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
 
 	reflection.Register(a.grpcServer)
 
-	pb.RegisterUserV1Server(a.grpcServer, a.serviceProvider.UserAPI())
+	pb.RegisterUserV1Server(a.grpcServer, a.serviceProvider.UserAPI(ctx))
 
 	return nil
 }

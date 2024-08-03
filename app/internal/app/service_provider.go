@@ -1,12 +1,13 @@
 package app
 
 import (
+	"context"
 	"log"
-
-	"github.com/jmoiron/sqlx"
 
 	"github.com/Prrromanssss/auth/config"
 	userAPI "github.com/Prrromanssss/auth/internal/api/grpc/user"
+	"github.com/Prrromanssss/auth/internal/client/db"
+	"github.com/Prrromanssss/auth/internal/client/db/pg"
 	"github.com/Prrromanssss/auth/internal/repository"
 	userRepository "github.com/Prrromanssss/auth/internal/repository/user"
 	"github.com/Prrromanssss/auth/internal/service"
@@ -17,7 +18,7 @@ import (
 type serviceProvider struct {
 	cfg *config.Config
 
-	db *sqlx.DB
+	db db.Client
 
 	userRepository repository.UserRepository
 	userService    service.UserService
@@ -30,40 +31,44 @@ func newServiceProvider(cfg *config.Config) *serviceProvider {
 	}
 }
 
-func (s *serviceProvider) DBClient() *sqlx.DB {
+func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
 	if s.db == nil {
-		db, err := sqlx.Connect("postgres", s.cfg.Postgres.DSN())
+		cl, err := pg.New(ctx, s.cfg.Postgres.DSN())
 		if err != nil {
-			log.Panic(err)
+			log.Fatalf("failed to create db client: %v", err)
 		}
 
-		closer.Add(db.Close)
+		err = cl.DB().Ping(ctx)
+		if err != nil {
+			log.Fatalf("ping error: %s", err.Error())
+		}
+		closer.Add(cl.Close)
 
-		s.db = db
+		s.db = cl
 	}
 
 	return s.db
 }
 
-func (s *serviceProvider) UserRepository() repository.UserRepository {
+func (s *serviceProvider) UserRepository(ctx context.Context) repository.UserRepository {
 	if s.userRepository == nil {
-		s.userRepository = userRepository.NewRepository(s.DBClient())
+		s.userRepository = userRepository.NewRepository(s.DBClient(ctx))
 	}
 
 	return s.userRepository
 }
 
-func (s *serviceProvider) UserService() service.UserService {
+func (s *serviceProvider) UserService(ctx context.Context) service.UserService {
 	if s.userService == nil {
-		s.userService = userService.NewService(s.UserRepository())
+		s.userService = userService.NewService(s.UserRepository(ctx))
 	}
 
 	return s.userService
 }
 
-func (s *serviceProvider) UserAPI() *userAPI.GRPCHandlers {
+func (s *serviceProvider) UserAPI(ctx context.Context) *userAPI.GRPCHandlers {
 	if s.userAPI == nil {
-		s.userAPI = userAPI.NewGRPCHandlers(s.UserService())
+		s.userAPI = userAPI.NewGRPCHandlers(s.UserService(ctx))
 	}
 
 	return s.userAPI

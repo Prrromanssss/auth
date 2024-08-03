@@ -15,7 +15,7 @@ func main() {
 
 	log.Println("Starting auth app")
 
-	app, err := app.NewApp()
+	app, err := app.NewApp(ctx)
 	if err != nil {
 		log.Panicf("Cannot start app: %v", err)
 	}
