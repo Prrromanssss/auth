@@ -91,14 +91,14 @@ jobs:
         run: |
           AUTH_TAG_NAME=$(echo $GITHUB_SHA | head -c7)
           docker buildx create --use
-          docker buildx build --no-cache --push --tag $REGISTRY/$IMAGE_APP_NAME:$AUTH_TAG_NAME -f Dockerfile .
+          docker buildx build --no-cache --push --tag $REGISTRY/$IMAGE_APP_NAME:$AUTH_TAG_NAME -f build/Dockerfile .
           echo "AUTH_TAG_NAME=$AUTH_TAG_NAME" >> $GITHUB_ENV
       
       - name: Build and Push Migrator
         run: |
           AUTH_MIGRATOR_TAG_NAME=$(echo $GITHUB_SHA | head -c7)
           docker buildx create --use
-          docker buildx build --no-cache --push --tag $REGISTRY/$IMAGE_MIGRATOR_NAME:$AUTH_MIGRATOR_TAG_NAME -f migration.Dockerfile .
+          docker buildx build --no-cache --push --tag $REGISTRY/$IMAGE_MIGRATOR_NAME:$AUTH_MIGRATOR_TAG_NAME -f build/migration.Dockerfile .
           echo "AUTH_MIGRATOR_TAG_NAME=$AUTH_MIGRATOR_TAG_NAME" >> $GITHUB_ENV
       
       - name: Save tag names as artifact
@@ -118,7 +118,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSHKEY }}
-          source: "docker-compose.yaml"
+          source: "build/docker-compose.yaml"
           target: "~"
 
       - name: Copy Env File via SCP
