@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -20,6 +21,10 @@ type Server struct {
 	Port string `validate:"required" yaml:"port"`
 }
 
+func (s *Server) Address() string {
+	return fmt.Sprintf("%s:%s", s.Host, s.Port)
+}
+
 // Database holds the configuration for the PostgreSQL database.
 type Database struct {
 	Host     string `validate:"required" yaml:"host"`
@@ -28,6 +33,20 @@ type Database struct {
 	Password string `validate:"required" yaml:"password"`
 	DBName   string `validate:"required" yaml:"dbname"`
 	SSLMode  string `validate:"required" yaml:"sslmode"`
+}
+
+func (d *Database) DSN() string {
+	connStr := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		d.Host,
+		d.Port,
+		d.User,
+		d.Password,
+		d.DBName,
+		d.SSLMode,
+	)
+
+	return connStr
 }
 
 // LoadConfig reads and parses the configuration from a file specified by the CONFIG_PATH environment variable.

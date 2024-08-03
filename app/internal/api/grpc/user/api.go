@@ -21,7 +21,7 @@ type GRPCHandlers struct {
 }
 
 // NewGRPCHandlers creates a new instance of GRPCHandlers with the provided UserService.
-func NewGRPCHandlers(userService service.UserService) pb.UserV1Server {
+func NewGRPCHandlers(userService service.UserService) *GRPCHandlers {
 	return &GRPCHandlers{userService: userService}
 }
 

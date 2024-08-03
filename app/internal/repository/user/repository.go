@@ -16,8 +16,8 @@ type userPGRepo struct {
 	db *sqlx.DB
 }
 
-// NewPGRepo creates a new instance of userPGRepo with the provided database connection.
-func NewPGRepo(db *sqlx.DB) repository.UserRepository {
+// NewRepository creates a new instance of userPGRepo with the provided database connection.
+func NewRepository(db *sqlx.DB) repository.UserRepository {
 	return &userPGRepo{db: db}
 }
 

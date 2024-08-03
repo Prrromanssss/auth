@@ -3,7 +3,7 @@ module github.com/Prrromanssss/auth
 go 1.22.4
 
 require (
-	github.com/guregu/null v4.0.0+incompatible
+	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/lib/pq v1.10.9
@@ -16,6 +16,7 @@ require (
 require (
 	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
+	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	golang.org/x/net v0.25.0 // indirect
 	golang.org/x/sys v0.20.0 // indirect
 	golang.org/x/text v0.15.0 // indirect

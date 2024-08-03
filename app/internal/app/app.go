@@ -2,58 +2,96 @@ package app
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/gofiber/fiber/v2/log"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc"
-
-	"github.com/jmoiron/sqlx"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/reflection"
 
 	"github.com/Prrromanssss/auth/config"
+	"github.com/Prrromanssss/auth/pkg/closer"
+	pb "github.com/Prrromanssss/auth/pkg/user_v1"
 )
 
-// Server holds the configuration, gRPC server instance, and PostgreSQL database connection.
-type Server struct {
-	cfg  *config.Config
-	grpc *grpc.Server
-	pgDB *sqlx.DB
+type App struct {
+	cfg             *config.Config
+	serviceProvider *serviceProvider
+	grpcServer      *grpc.Server
 }
 
-// NewServer creates a new Server instance with the provided configuration and database connection.
-func NewServer(
-	cfg *config.Config,
-	database *sqlx.DB,
-) *Server {
-	return &Server{
-		cfg:  cfg,
-		grpc: grpc.NewServer(),
-		pgDB: database,
+func NewApp() (*App, error) {
+	a := &App{}
+
+	err := a.initDeps()
+	if err != nil {
+		return nil, err
 	}
+
+	return a, nil
 }
 
-// Run starts the gRPC server, sets up handlers, and manages graceful shutdown on context cancellation or termination signals.
-func (s *Server) Run(ctx context.Context, cancel context.CancelFunc) error {
-	// Map gRPC handlers to the server
-	if err := s.MapHandlers(ctx); err != nil {
-		log.Fatalf("Cannot map handlers: %v", err)
+func (a *App) initDeps() error {
+	inits := []func() error{
+		a.initConfig,
+		a.initServiceProvider,
+		a.initGRPCServer,
 	}
 
-	go func() {
-		listener, err := net.Listen(
-			"tcp",
-			fmt.Sprintf("%s:%s", s.cfg.GRPC.Host, s.cfg.GRPC.Port),
-		)
+	for _, f := range inits {
+		err := f()
 		if err != nil {
-			log.Fatalf("Error starting listener: %s", err.Error())
+			return err
 		}
+	}
 
-		log.Printf("Starting gRPC server on %s:%s", s.cfg.GRPC.Host, s.cfg.GRPC.Port)
-		if err := s.grpc.Serve(listener); err != nil {
-			log.Fatalf("Error starting gRPC server: %s", err.Error())
+	return nil
+}
+
+func (a *App) initConfig() error {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return err
+	}
+
+	log.Info("Config loaded")
+
+	a.cfg = cfg
+
+	return nil
+}
+
+func (a *App) initServiceProvider() error {
+	a.serviceProvider = newServiceProvider(a.cfg)
+
+	return nil
+}
+
+func (a *App) initGRPCServer() error {
+	a.grpcServer = grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
+
+	reflection.Register(a.grpcServer)
+
+	pb.RegisterUserV1Server(a.grpcServer, a.serviceProvider.UserAPI())
+
+	return nil
+}
+
+func (a *App) Run(ctx context.Context, cancel context.CancelFunc) error {
+	defer func() {
+		closer.CloseAll()
+		closer.Wait()
+	}()
+
+	// Starting gRPC server
+	go func() {
+		err := a.runGRPCServer()
+		if err != nil {
+			log.Panic(err)
 		}
 	}()
 
@@ -63,15 +101,33 @@ func (s *Server) Run(ctx context.Context, cancel context.CancelFunc) error {
 
 	select {
 	case <-ctx.Done():
-		log.Println("Context cancelled, initiating graceful shutdown...")
-		s.grpc.GracefulStop()
+		log.Info("Context cancelled, initiating graceful shutdown...")
+		a.grpcServer.GracefulStop()
 	case <-quit:
-		log.Println("Received termination signal, initiating graceful shutdown...")
-		s.grpc.GracefulStop()
+		log.Info("Received termination signal, initiating graceful shutdown...")
+		a.grpcServer.GracefulStop()
 	}
 
-	log.Println("gRPC server shut down gracefully")
+	log.Info("gRPC server shut down gracefully")
 	cancel()
+
+	return nil
+}
+
+func (a *App) runGRPCServer() error {
+	listener, err := net.Listen(
+		"tcp",
+		a.cfg.GRPC.Address(),
+	)
+	if err != nil {
+		return errors.Wrapf(err, "Error starting listener")
+	}
+
+	log.Infof("Starting gRPC server on %s", a.cfg.GRPC.Address())
+
+	if err := a.grpcServer.Serve(listener); err != nil {
+		return errors.Wrapf(err, "Error starting gRPC server")
+	}
 
 	return nil
 }
