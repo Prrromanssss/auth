@@ -67,6 +67,8 @@ func ConvertDeleteUserParamsFromServiceToRepo(params model.DeleteUserParams) mod
 	}
 }
 
+// ConvertCreateAPILogParamsFromServiceToRepo converts CreateAPILogParams from the service layer
+// to the repository layer format.
 func ConvertCreateAPILogParamsFromServiceToRepo(params model.CreateAPILogParams) modelRepo.CreateAPILogParams {
 	var responseData sql.NullString
 
