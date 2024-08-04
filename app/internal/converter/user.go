@@ -7,7 +7,7 @@ import (
 	pb "github.com/Prrromanssss/auth/pkg/user_v1"
 )
 
-// ConvertCreateRequestFromHandlerToService converts a gRPC CreateRequest to a CreateUserParams model used by the service layer.
+// ConvertCreateRequestFromHandlerToService converts a CreateRequest to a CreateUserParams the api layer to the service layer.
 func ConvertCreateRequestFromHandlerToService(params *pb.CreateRequest) model.CreateUserParams {
 	return model.CreateUserParams{
 		Name:           params.Name,
@@ -17,21 +17,21 @@ func ConvertCreateRequestFromHandlerToService(params *pb.CreateRequest) model.Cr
 	}
 }
 
-// ConvertCreateUserResponseFromServiceToHandler converts a CreateUserResponse model from the service layer to a gRPC CreateResponse.
+// ConvertCreateUserResponseFromServiceToHandler converts a CreateUserResponse model from the service layer to the api layer.
 func ConvertCreateUserResponseFromServiceToHandler(params model.CreateUserResponse) *pb.CreateResponse {
 	return &pb.CreateResponse{
 		Id: params.UserID,
 	}
 }
 
-// ConvertGetRequestFromHandlerToService converts a gRPC GetRequest to a GetUserParams model used by the service layer.
+// ConvertGetRequestFromHandlerToService converts a GetRequest to a GetUserParams from the api layer to the service layer.
 func ConvertGetRequestFromHandlerToService(params *pb.GetRequest) model.GetUserParams {
 	return model.GetUserParams{
 		UserID: params.Id,
 	}
 }
 
-// ConvertGetUserResponseFromHandlerToService converts a GetUserResponse model from the service layer to a gRPC GetResponse.
+// ConvertGetUserResponseFromHandlerToService converts a GetUserResponse model from the service layer to the api layer.
 func ConvertGetUserResponseFromHandlerToService(params model.GetUserResponse) *pb.GetResponse {
 	return &pb.GetResponse{
 		Id:        params.UserID,
