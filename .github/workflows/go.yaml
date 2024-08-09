@@ -91,14 +91,14 @@ jobs:
         run: |
           AUTH_TAG_NAME=$(echo $GITHUB_SHA | head -c7)
           docker buildx create --use
-          docker buildx build --no-cache --push --tag $REGISTRY/$IMAGE_APP_NAME:$AUTH_TAG_NAME -f Dockerfile .
+          docker buildx build --no-cache --push --tag $REGISTRY/$IMAGE_APP_NAME:$AUTH_TAG_NAME -f build/Dockerfile .
           echo "AUTH_TAG_NAME=$AUTH_TAG_NAME" >> $GITHUB_ENV
       
       - name: Build and Push Migrator
         run: |
           AUTH_MIGRATOR_TAG_NAME=$(echo $GITHUB_SHA | head -c7)
           docker buildx create --use
-          docker buildx build --no-cache --push --tag $REGISTRY/$IMAGE_MIGRATOR_NAME:$AUTH_MIGRATOR_TAG_NAME -f migration.Dockerfile .
+          docker buildx build --no-cache --push --tag $REGISTRY/$IMAGE_MIGRATOR_NAME:$AUTH_MIGRATOR_TAG_NAME -f build/migration.Dockerfile .
           echo "AUTH_MIGRATOR_TAG_NAME=$AUTH_MIGRATOR_TAG_NAME" >> $GITHUB_ENV
       
       - name: Save tag names as artifact
@@ -118,8 +118,8 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSHKEY }}
-          source: "docker-compose.yaml"
-          target: "~"
+          source: "build/docker-compose.yaml"
+          target: "~/auth"
 
       - name: Copy Env File via SCP
         uses: appleboy/scp-action@master
@@ -128,7 +128,7 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSHKEY }}
           source: ".env"
-          target: "~"
+          target: "~/auth"
 
   deploy:
     runs-on: ubuntu-latest
@@ -158,11 +158,14 @@ jobs:
           envs: AUTH_TAG_NAME, REGISTRY, AUTH_MIGRATOR_TAG_NAME, IMAGE_APP_NAME, IMAGE_MIGRATOR_NAME
           script: |
             # Set up variables
-            echo "AUTH_TAG_NAME=$AUTH_TAG_NAME" >> .env
-            echo "AUTH_MIGRATOR_TAG_NAME=$AUTH_MIGRATOR_TAG_NAME" >> .env
+            echo "AUTH_TAG_NAME=$AUTH_TAG_NAME" >> ~/auth/.env
+            echo "AUTH_MIGRATOR_TAG_NAME=$AUTH_MIGRATOR_TAG_NAME" >> ~/auth/.env
 
             # Login into Selectel Registry
             echo ${{ secrets.REGISTRY_PASSWORD }} | docker login -u ${{ secrets.REGISTRY_USERNAME }} --password-stdin $REGISTRY
+
+            # Navigate to the chat_server directory
+            cd ~/auth
             
             # Stop old container
             docker compose down

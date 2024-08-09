@@ -1,4 +1,4 @@
-package repository
+package service
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 )
 
 // UserRepository defines methods for user data operations.
-type UserRepository interface {
+type UserService interface {
 	// CreateUser adds a new user and returns the user ID and any error.
 	CreateUser(ctx context.Context, params model.CreateUserParams) (resp model.CreateUserResponse, err error)
 
@@ -19,7 +19,4 @@ type UserRepository interface {
 
 	// DeleteUser removes a user by ID and returns any error.
 	DeleteUser(ctx context.Context, params model.DeleteUserParams) (err error)
-
-	// CreateAPILog creates log in database of every api action and returns any error..
-	CreateAPILog(ctx context.Context, params model.CreateAPILogParams) (err error)
 }
