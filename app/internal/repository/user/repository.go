@@ -3,10 +3,10 @@ package user
 import (
 	"context"
 
+	"github.com/Prrromanssss/platform_common/pkg/db"
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/pkg/errors"
 
-	"github.com/Prrromanssss/auth/internal/client/db"
 	"github.com/Prrromanssss/auth/internal/model"
 	"github.com/Prrromanssss/auth/internal/repository"
 	"github.com/Prrromanssss/auth/internal/repository/user/converter"
@@ -42,7 +42,7 @@ func (p *userPGRepo) CreateUser(
 	if err != nil {
 		return resp, errors.Wrapf(
 			err,
-			"userPGRepo.CreateUser.DB.ScanOneContext.queryCreateUser(email: %s)",
+			"Cannot create user(email: %s)",
 			paramsRepo.Email,
 		)
 	}
@@ -70,7 +70,7 @@ func (p *userPGRepo) GetUser(
 	if err != nil {
 		return resp, errors.Wrapf(
 			err,
-			"userPGRepo.GetUser.DB.ScanOneContext.queryGetUser(userID: %d)",
+			"Cannot get user(userID: %d)",
 			paramsRepo.UserID,
 		)
 	}
@@ -96,7 +96,7 @@ func (p *userPGRepo) UpdateUser(
 	if err != nil {
 		return errors.Wrapf(
 			err,
-			"userPGRepo.UpdateUser.DB.ExecContext.queryUpdateUser(userID: %d)",
+			"Cannot update user(userID: %d)",
 			paramsRepo.UserID,
 		)
 	}
@@ -122,7 +122,7 @@ func (p *userPGRepo) DeleteUser(
 	if err != nil {
 		return errors.Wrapf(
 			err,
-			"userPGRepo.DeleteUser.DB.ExecContext.queryDeleteUser(userID: %d)",
+			"Cannot delete user(userID: %d)",
 			paramsRepo.UserID,
 		)
 	}
@@ -148,7 +148,7 @@ func (p *userPGRepo) CreateAPILog(
 	if err != nil {
 		return errors.Wrapf(
 			err,
-			"userPGRepo.CreateAPILog.DB.ExecContext.queryCreateAPILog",
+			"Cannot create api log for user",
 		)
 	}
 

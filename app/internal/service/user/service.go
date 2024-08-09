@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/Prrromanssss/platform_common/pkg/db"
 	"github.com/gofiber/fiber/v2/log"
 
-	"github.com/Prrromanssss/auth/internal/client/db"
 	"github.com/Prrromanssss/auth/internal/model"
 	"github.com/Prrromanssss/auth/internal/repository"
 	"github.com/Prrromanssss/auth/internal/service"

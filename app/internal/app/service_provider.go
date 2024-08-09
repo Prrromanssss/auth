@@ -4,16 +4,18 @@ import (
 	"context"
 	"log"
 
+	"github.com/Prrromanssss/platform_common/pkg/closer"
+
+	"github.com/Prrromanssss/platform_common/pkg/db"
+	"github.com/Prrromanssss/platform_common/pkg/db/pg"
+	"github.com/Prrromanssss/platform_common/pkg/db/transaction"
+
 	"github.com/Prrromanssss/auth/config"
 	userAPI "github.com/Prrromanssss/auth/internal/api/grpc/user"
-	"github.com/Prrromanssss/auth/internal/client/db"
-	"github.com/Prrromanssss/auth/internal/client/db/pg"
-	"github.com/Prrromanssss/auth/internal/client/db/transaction"
 	"github.com/Prrromanssss/auth/internal/repository"
 	userRepository "github.com/Prrromanssss/auth/internal/repository/user"
 	"github.com/Prrromanssss/auth/internal/service"
 	userService "github.com/Prrromanssss/auth/internal/service/user"
-	"github.com/Prrromanssss/auth/pkg/closer"
 )
 
 type serviceProvider struct {
