@@ -4,6 +4,8 @@ github.com/BurntSushi/toml v1.2.1/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbi
 github.com/Masterminds/semver/v3 v3.1.1/go.mod h1:VPu/7SZ7ePZ3QOrcuXROw5FAcLl4a0cBrbBpGY/8hQs=
 github.com/Prrromanssss/platform_common v0.0.0-20240807205217-caecca39e197 h1:79OnhJqzJ6tytAUsrlYxh43oG5ZLWSkRfi4Olsexf6k=
 github.com/Prrromanssss/platform_common v0.0.0-20240807205217-caecca39e197/go.mod h1:nKtg0ERGRW60MKJ4Q9VHH/hxDNzNPQVONIJ3TvpbaEg=
+github.com/Prrromanssss/platform_common v0.0.1 h1:7vFmi4hMJvP463SxABMJU35EWjZzXdsZ3lg/YRQJRDM=
+github.com/Prrromanssss/platform_common v0.0.1/go.mod h1:nKtg0ERGRW60MKJ4Q9VHH/hxDNzNPQVONIJ3TvpbaEg=
 github.com/cockroachdb/apd v1.1.0 h1:3LFP3629v+1aKXU5Q37mxmRxX/pIu1nijXydLShEq5I=
 github.com/cockroachdb/apd v1.1.0/go.mod h1:8Sl8LxpKi29FqWXR16WEFZRNSz3SoPzUzeMeY4+DwBQ=
 github.com/cockroachdb/cockroach-go/v2 v2.2.0 h1:/5znzg5n373N/3ESjHF5SMLxiW4RKB05Ql//KWfeTFs=

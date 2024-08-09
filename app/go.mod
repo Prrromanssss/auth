@@ -3,7 +3,7 @@ module github.com/Prrromanssss/auth
 go 1.22.4
 
 require (
-	github.com/Prrromanssss/platform_common v0.0.0-20240807205217-caecca39e197
+	github.com/Prrromanssss/platform_common v0.0.1
 	github.com/georgysavva/scany v1.2.2
 	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/ilyakaznacheev/cleanenv v1.5.0
