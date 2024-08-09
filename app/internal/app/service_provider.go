@@ -4,11 +4,13 @@ import (
 	"context"
 	"log"
 
+	"github.com/Prrromanssss/platform_common/pkg/cache"
+	"github.com/Prrromanssss/platform_common/pkg/cache/redis"
 	"github.com/Prrromanssss/platform_common/pkg/closer"
-
 	"github.com/Prrromanssss/platform_common/pkg/db"
 	"github.com/Prrromanssss/platform_common/pkg/db/pg"
 	"github.com/Prrromanssss/platform_common/pkg/db/transaction"
+	redigo "github.com/gomodule/redigo/redis"
 
 	"github.com/Prrromanssss/auth/config"
 	userAPI "github.com/Prrromanssss/auth/internal/api/grpc/user"
@@ -23,6 +25,9 @@ type serviceProvider struct {
 
 	db        db.Client
 	txManager db.TxManager
+
+	redisPool   *redigo.Pool
+	redisClient cache.RedisClient
 
 	userRepository repository.UserRepository
 	userService    service.UserService
@@ -52,6 +57,28 @@ func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
 	}
 
 	return s.db
+}
+
+func (s *serviceProvider) RedisPool() *redigo.Pool {
+	if s.redisPool == nil {
+		s.redisPool = &redigo.Pool{
+			MaxIdle:     s.cfg.Redis.MaxIdle(),
+			IdleTimeout: s.cfg.Redis.IdleTimeout(),
+			DialContext: func(ctx context.Context) (redigo.Conn, error) {
+				return redigo.DialContext(ctx, "tcp", s.cfg.Redis.Address())
+			},
+		}
+	}
+
+	return s.redisPool
+}
+
+func (s *serviceProvider) RedisClient() cache.RedisClient {
+	if s.redisClient == nil {
+		s.redisClient = redis.NewClient(s.RedisPool(), s.cfg.Redis)
+	}
+
+	return s.redisClient
 }
 
 func (s *serviceProvider) UserRepository(ctx context.Context) repository.UserRepository {

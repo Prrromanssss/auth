@@ -15,21 +15,21 @@ type Redis struct {
 }
 
 // Address returns the Redis server address.
-func (r *Redis) Address() string {
+func (r Redis) Address() string {
 	return net.JoinHostPort(r.host, r.port)
 }
 
 // ConnectionTimeout returns the connection timeout duration.
-func (r *Redis) ConnectionTimeout() time.Duration {
+func (r Redis) ConnectionTimeout() time.Duration {
 	return r.connectionTimeout
 }
 
 // MaxIdle returns the maximum number of idle connections.
-func (r *Redis) MaxIdle() int {
+func (r Redis) MaxIdle() int {
 	return r.maxIdle
 }
 
 // IdleTimeout returns the idle timeout duration.
-func (r *Redis) IdleTimeout() time.Duration {
+func (r Redis) IdleTimeout() time.Duration {
 	return r.idleTimeout
 }

@@ -13,7 +13,7 @@ type Postgres struct {
 }
 
 // DSN returns the Data Source Name for connecting to PostgreSQL.
-func (p *Postgres) DSN() string {
+func (p Postgres) DSN() string {
 	connStr := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		p.host,

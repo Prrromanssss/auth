@@ -9,6 +9,6 @@ type Server struct {
 }
 
 // Address returns the server address.
-func (s *Server) Address() string {
+func (s Server) Address() string {
 	return fmt.Sprintf("%s:%s", s.host, s.port)
 }
