@@ -1,52 +1,20 @@
 package config
 
 import (
-	"fmt"
 	"log"
 	"os"
 
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/pkg/errors"
+
+	"github.com/Prrromanssss/auth/config/yaml"
 )
 
 // Config holds the configuration for the application.
 type Config struct {
-	GRPC     Server   `validate:"required" yaml:"grpc"`
-	Postgres Database `validate:"required" yaml:"postgres"`
-}
-
-// Server holds the configuration for the gRPC server.
-type Server struct {
-	Host string `validate:"required" yaml:"host"`
-	Port string `validate:"required" yaml:"port"`
-}
-
-func (s *Server) Address() string {
-	return fmt.Sprintf("%s:%s", s.Host, s.Port)
-}
-
-// Database holds the configuration for the PostgreSQL database.
-type Database struct {
-	Host     string `validate:"required" yaml:"host"`
-	Port     string `validate:"required" yaml:"port"`
-	User     string `validate:"required" yaml:"user"`
-	Password string `validate:"required" yaml:"password"`
-	DBName   string `validate:"required" yaml:"dbname"`
-	SSLMode  string `validate:"required" yaml:"sslmode"`
-}
-
-func (d *Database) DSN() string {
-	connStr := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		d.Host,
-		d.Port,
-		d.User,
-		d.Password,
-		d.DBName,
-		d.SSLMode,
-	)
-
-	return connStr
+	GRPC     yaml.Server   `validate:"required" yaml:"grpc"`
+	Postgres yaml.Postgres `validate:"required" yaml:"postgres"`
+	Redis    yaml.Redis    `validate:"required" yaml:"redis"`
 }
 
 // LoadConfig reads and parses the configuration from a file specified by the CONFIG_PATH environment variable.
