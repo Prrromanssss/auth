@@ -44,7 +44,7 @@ func TestGet(t *testing.T) {
 		updatedAt = gofakeit.Date()
 
 		ErrRepository    = errors.New("repository error")
-		ErrRepositoryLog = errors.New("repository error in log")
+		ErrRepositoryLog = errors.New("repository error in CreateAPILog")
 
 		req = model.GetUserParams{
 			UserID: id,
@@ -134,7 +134,7 @@ func TestGet(t *testing.T) {
 			},
 		},
 		{
-			name: "repository error in log",
+			name: "repository error in CreateAPILog",
 			args: args{
 				ctx: ctx,
 				req: req,

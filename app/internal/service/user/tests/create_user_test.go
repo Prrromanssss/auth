@@ -45,7 +45,7 @@ func TestCreate(t *testing.T) {
 		hashedPassword = crypto.HashPassword(password)
 
 		ErrRepository    = errors.New("repository error")
-		ErrRepositoryLog = errors.New("repository error in log")
+		ErrRepositoryLog = errors.New("repository error in CreateAPILog")
 
 		req = model.CreateUserParams{
 			Name:           name,
@@ -133,7 +133,7 @@ func TestCreate(t *testing.T) {
 			},
 		},
 		{
-			name: "repository error in log",
+			name: "repository error in CreateAPILog",
 			args: args{
 				ctx: ctx,
 				req: req,

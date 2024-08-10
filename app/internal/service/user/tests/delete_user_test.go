@@ -38,7 +38,7 @@ func TestDelete(t *testing.T) {
 		id = gofakeit.Int64()
 
 		ErrRepository    = errors.New("repository error")
-		ErrRepositoryLog = errors.New("repository error in log")
+		ErrRepositoryLog = errors.New("repository error in CreateAPILog")
 
 		req = model.DeleteUserParams{
 			UserID: id,
@@ -108,7 +108,7 @@ func TestDelete(t *testing.T) {
 			},
 		},
 		{
-			name: "repository error in log",
+			name: "repository error in CreateAPILog",
 			args: args{
 				ctx: ctx,
 				req: req,
