@@ -84,7 +84,7 @@ func (s *userService) GetUser(
 		var txErr error
 
 		resp, txErr = s.userRepository.GetUser(ctx, params)
-		if err != nil {
+		if txErr != nil {
 			return txErr
 		}
 

@@ -4,6 +4,8 @@ github.com/BurntSushi/toml v1.2.1/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbi
 github.com/Masterminds/semver/v3 v3.1.1/go.mod h1:VPu/7SZ7ePZ3QOrcuXROw5FAcLl4a0cBrbBpGY/8hQs=
 github.com/Prrromanssss/platform_common v0.0.1 h1:7vFmi4hMJvP463SxABMJU35EWjZzXdsZ3lg/YRQJRDM=
 github.com/Prrromanssss/platform_common v0.0.1/go.mod h1:nKtg0ERGRW60MKJ4Q9VHH/hxDNzNPQVONIJ3TvpbaEg=
+github.com/Prrromanssss/platform_common v0.0.2 h1:pJe14ayKpTkY451k0kH4TjpnHAbd8SGeJj3ENW6vpSI=
+github.com/Prrromanssss/platform_common v0.0.2/go.mod h1:Z82YABeAtps9GPiLmqNb7RoEzeRa8LzpS3x/MdO0Z9U=
 github.com/brianvoe/gofakeit/v6 v6.28.0 h1:Xib46XXuQfmlLS2EXRuJpqcw8St6qSZz75OUo0tgAW4=
 github.com/brianvoe/gofakeit/v6 v6.28.0/go.mod h1:Xj58BMSnFqcn/fAQeSK+/PLtC5kSb7FJIq4JyGa8vEs=
 github.com/cockroachdb/apd v1.1.0 h1:3LFP3629v+1aKXU5Q37mxmRxX/pIu1nijXydLShEq5I=

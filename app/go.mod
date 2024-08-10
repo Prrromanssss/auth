@@ -3,7 +3,7 @@ module github.com/Prrromanssss/auth
 go 1.22.4
 
 require (
-	github.com/Prrromanssss/platform_common v0.0.1
+	github.com/Prrromanssss/platform_common v0.0.2
 	github.com/brianvoe/gofakeit/v6 v6.28.0
 	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/gojuno/minimock/v3 v3.3.14
