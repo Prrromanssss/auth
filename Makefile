@@ -2,13 +2,11 @@ LOCAL_BIN:=$(CURDIR)/app/bin
 LOCAL_MIGRATION_DIR=$(MIGRATION_DIR)
 LOCAL_MIGRATION_DSN="host=localhost port=$(PG_PORT) dbname=$(PG_DATABASE_NAME) user=$(PG_USER) password=$(PG_PASSWORD) sslmode=disable"
 
-install-golangci-lint:
-	GOBIN=$(LOCAL_BIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.53.3
-
 lint:
 	GOBIN=$(LOCAL_BIN) golangci-lint run ./... --config .golangci.pipeline.yaml
 
 install-deps:
+	GOBIN=$(LOCAL_BIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.53.3
 	GOBIN=$(LOCAL_BIN) go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28.1
 	GOBIN=$(LOCAL_BIN) go install -mod=mod google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
 	GOBIN=$(LOCAL_BIN) go install github.com/pressly/goose/v3/cmd/goose@v3.14.0
@@ -16,7 +14,6 @@ install-deps:
 get-deps:
 	go get -u google.golang.org/protobuf/cmd/protoc-gen-go
 	go get -u google.golang.org/grpc/cmd/protoc-gen-go-grpc
-
 
 generate:
 	make generate-user-api
@@ -38,3 +35,14 @@ local-migration-up:
 
 local-migration-down:
 	${LOCAL_BIN}/goose -dir ${LOCAL_MIGRATION_DIR} postgres ${LOCAL_MIGRATION_DSN} down -v
+
+
+test-coverage:
+	@cd app && \
+	go clean -testcache && \
+	go test ./... -coverprofile=coverage.tmp.out -covermode count -coverpkg=github.com/Prrromanssss/auth/internal/service/...,github.com/Prrromanssss/auth/internal/api/... -count 5  && \
+	grep -v 'mocks\|config' coverage.tmp.out  > coverage.out  && \
+	rm coverage.tmp.out
+	cd app && go tool cover -html=coverage.out;
+	cd app &&go tool cover -func=./coverage.out | grep "total";
+	cd app && grep -sqFx "/coverage.out" .gitignore || echo "/coverage.out" >> .gitignore

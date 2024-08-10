@@ -1,4 +1,4 @@
-package grpc
+package user
 
 import (
 	"context"
@@ -37,12 +37,9 @@ func (h *GRPCHandlers) Create(ctx context.Context, req *pb.CreateRequest) (*pb.C
 		return nil, errors.New("passwords don't match")
 	}
 
-	hashPassword, err := crypto.HashPassword(req.Password)
-	if err != nil {
-		return nil, err
-	}
+	hashedPassword := crypto.HashPassword(req.Password)
 
-	req.Password = hashPassword
+	req.Password = hashedPassword
 
 	resp, err := h.userService.CreateUser(ctx, converter.ConvertCreateRequestFromHandlerToService(req))
 	if err != nil {
