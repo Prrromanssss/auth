@@ -15,11 +15,13 @@ type UserRepository interface {
 	GetUser(ctx context.Context, params model.GetUserParams) (resp model.GetUserResponse, err error)
 
 	// UpdateUser updates user details by ID and returns any error.
-	UpdateUser(ctx context.Context, params model.UpdateUserParams) (err error)
+	UpdateUser(ctx context.Context, params model.UpdateUserParams) (resp model.UpdateUserResponse, err error)
 
 	// DeleteUser removes a user by ID and returns any error.
 	DeleteUser(ctx context.Context, params model.DeleteUserParams) (err error)
+}
 
+type LogRepository interface {
 	// CreateAPILog creates log in database of every api action and returns any error..
 	CreateAPILog(ctx context.Context, params model.CreateAPILogParams) (err error)
 }

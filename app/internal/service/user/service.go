@@ -2,11 +2,14 @@ package user
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 
 	"github.com/Prrromanssss/platform_common/pkg/db"
 	"github.com/gofiber/fiber/v2/log"
 
+	modelCache "github.com/Prrromanssss/auth/internal/cache/user/model"
+
+	"github.com/Prrromanssss/auth/internal/cache"
 	"github.com/Prrromanssss/auth/internal/model"
 	"github.com/Prrromanssss/auth/internal/repository"
 	"github.com/Prrromanssss/auth/internal/service"
@@ -14,16 +17,22 @@ import (
 
 type userService struct {
 	userRepository repository.UserRepository
+	logRepository  repository.LogRepository
+	cacheClient    cache.UserCache
 	txManager      db.TxManager
 }
 
 // NewService creates a new instance of userService with the provided UserRepository.
 func NewService(
 	userRepository repository.UserRepository,
+	logRepository repository.LogRepository,
+	cacheClient cache.UserCache,
 	txManager db.TxManager,
 ) service.UserService {
 	return &userService{
 		userRepository: userRepository,
+		logRepository:  logRepository,
+		cacheClient:    cacheClient,
 		txManager:      txManager,
 	}
 }
@@ -43,22 +52,10 @@ func (s *userService) CreateUser(
 			return txErr
 		}
 
-		requestData, txErr := json.Marshal(params)
-		if txErr != nil {
-			return txErr
-		}
-
-		responseData, txErr := json.Marshal(resp)
-		if txErr != nil {
-			return txErr
-		}
-
-		responseDataString := string(responseData)
-
-		txErr = s.userRepository.CreateAPILog(ctx, model.CreateAPILogParams{
+		txErr = s.logRepository.CreateAPILog(ctx, model.CreateAPILogParams{
 			Method:       "Create",
-			RequestData:  string(requestData),
-			ResponseData: &responseDataString,
+			RequestData:  params,
+			ResponseData: resp,
 		})
 		if txErr != nil {
 			return txErr
@@ -68,6 +65,11 @@ func (s *userService) CreateUser(
 	})
 	if err != nil {
 		return model.CreateUserResponse{}, err
+	}
+
+	cacheErr := s.cacheClient.Create(ctx, resp.User)
+	if cacheErr != nil {
+		log.Warnf("Failed to create user in cache, params: %+v, err: %+v", params, cacheErr)
 	}
 
 	return resp, nil
@@ -80,6 +82,14 @@ func (s *userService) GetUser(
 ) (resp model.GetUserResponse, err error) {
 	log.Infof("userService.GetUser, params: %+v", params)
 
+	user, cacheErr := s.cacheClient.Get(ctx, params)
+	if cacheErr != nil && !errors.Is(cacheErr, modelCache.ErrUserNotFound) {
+		log.Warnf("Failed to get user from cache, params: %+v, err: %+v", params, cacheErr)
+	} else if cacheErr == nil {
+		log.Infof("User retrieved from cache, userID: %d", params.UserID)
+		return user, nil
+	}
+
 	err = s.txManager.ReadCommitted(ctx, func(ctx context.Context) error {
 		var txErr error
 
@@ -88,22 +98,10 @@ func (s *userService) GetUser(
 			return txErr
 		}
 
-		requestData, txErr := json.Marshal(params)
-		if txErr != nil {
-			return txErr
-		}
-
-		responseData, txErr := json.Marshal(resp)
-		if txErr != nil {
-			return txErr
-		}
-
-		responseDataString := string(responseData)
-
-		txErr = s.userRepository.CreateAPILog(ctx, model.CreateAPILogParams{
+		txErr = s.logRepository.CreateAPILog(ctx, model.CreateAPILogParams{
 			Method:       "Get",
-			RequestData:  string(requestData),
-			ResponseData: &responseDataString,
+			RequestData:  params,
+			ResponseData: resp,
 		})
 		if txErr != nil {
 			return txErr
@@ -113,6 +111,13 @@ func (s *userService) GetUser(
 	})
 	if err != nil {
 		return model.GetUserResponse{}, err
+	}
+
+	if errors.Is(cacheErr, modelCache.ErrUserNotFound) {
+		cacheErr = s.cacheClient.Create(ctx, resp.User)
+		if cacheErr != nil {
+			log.Warnf("Failed to create user in cache, params: %+v, err: %+v", resp, cacheErr)
+		}
 	}
 
 	return resp, nil
@@ -125,24 +130,25 @@ func (s *userService) UpdateUser(
 ) (err error) {
 	log.Infof("userService.UpdateUser, params: %+v", params)
 
+	var resp model.UpdateUserResponse
+
+	cacheErr := s.cacheClient.Delete(ctx, model.DeleteUserParams{UserID: params.UserID})
+	if cacheErr != nil {
+		log.Warnf("Failed to delete user from cache before update, UserID: %d, err: %v", params.UserID, cacheErr)
+	}
+
 	err = s.txManager.ReadCommitted(ctx, func(ctx context.Context) error {
 		var txErr error
-		var responseData *string
 
-		txErr = s.userRepository.UpdateUser(ctx, params)
+		resp, txErr = s.userRepository.UpdateUser(ctx, params)
 		if txErr != nil {
 			return txErr
 		}
 
-		requestData, txErr := json.Marshal(params)
-		if txErr != nil {
-			return txErr
-		}
-
-		txErr = s.userRepository.CreateAPILog(ctx, model.CreateAPILogParams{
+		txErr = s.logRepository.CreateAPILog(ctx, model.CreateAPILogParams{
 			Method:       "Update",
-			RequestData:  string(requestData),
-			ResponseData: responseData,
+			RequestData:  params,
+			ResponseData: resp,
 		})
 		if txErr != nil {
 			return txErr
@@ -152,6 +158,11 @@ func (s *userService) UpdateUser(
 	})
 	if err != nil {
 		return err
+	}
+
+	cacheErr = s.cacheClient.Create(ctx, resp.User)
+	if cacheErr != nil {
+		log.Warnf("Failed to create user in cache, params: %+v, err: %+v", resp, cacheErr)
 	}
 
 	return nil
@@ -166,22 +177,15 @@ func (s *userService) DeleteUser(
 
 	err = s.txManager.ReadCommitted(ctx, func(ctx context.Context) error {
 		var txErr error
-		var responseData *string
 
 		txErr = s.userRepository.DeleteUser(ctx, params)
 		if txErr != nil {
 			return txErr
 		}
 
-		requestData, txErr := json.Marshal(params)
-		if txErr != nil {
-			return txErr
-		}
-
-		txErr = s.userRepository.CreateAPILog(ctx, model.CreateAPILogParams{
-			Method:       "Delete",
-			RequestData:  string(requestData),
-			ResponseData: responseData,
+		txErr = s.logRepository.CreateAPILog(ctx, model.CreateAPILogParams{
+			Method:      "Delete",
+			RequestData: params,
 		})
 		if txErr != nil {
 			return txErr
@@ -191,6 +195,11 @@ func (s *userService) DeleteUser(
 	})
 	if err != nil {
 		return err
+	}
+
+	cacheErr := s.cacheClient.Delete(ctx, params)
+	if cacheErr != nil {
+		log.Warnf("Failed to delete user from cache, params: %+v, err: %v", params, cacheErr)
 	}
 
 	return nil

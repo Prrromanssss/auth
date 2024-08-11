@@ -37,6 +37,8 @@ func TestCreate(t *testing.T) {
 		role           = pb.Role_ADMIN
 		password       = gofakeit.Password(true, true, true, true, true, 10)
 		hashedPassword = crypto.HashPassword(password)
+		createdAt      = gofakeit.Date()
+		updatedAt      = gofakeit.Date()
 
 		ErrInvalidPassword = errors.New("passwords don't match")
 		ErrService         = errors.New("service error")
@@ -53,7 +55,14 @@ func TestCreate(t *testing.T) {
 		}
 
 		serviceResp = model.CreateUserResponse{
-			UserID: id,
+			User: model.User{
+				UserID:    id,
+				Name:      name,
+				Email:     email,
+				Role:      int64(role),
+				CreatedAt: createdAt,
+				UpdatedAt: updatedAt,
+			},
 		}
 	)
 

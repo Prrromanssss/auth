@@ -2,15 +2,18 @@ version: '3.9'
 
 volumes:
   postgres_volume:
+  redis-data:
 
 services:
   auth:
-    image: cr.selcloud.ru/slimshady/auth:${AUTH_TAG_NAME}
+    build:
+      context: .
+      dockerfile: ./build/Dockerfile
     restart: always
     depends_on:
       - auth-pg
     ports:
-      - "${AUTH_OUTER_PORT}:50052"
+      - "50052:50052"
     environment:
       - CONFIG_PATH=/config.yaml
 
@@ -19,16 +22,18 @@ services:
     env_file:
       - ".env"
     ports:
-      - "${POSTGRES_OUTER_PORT}:5432"
+      - "54321:5432"
     volumes:
       - postgres_volume:/var/lib/postgresql/data
 
   auth-migrator:
-    image: cr.selcloud.ru/slimshady/auth-migrator:${AUTH_MIGRATOR_TAG_NAME}
+    build:
+      context: .
+      dockerfile: ./build/migration.Dockerfile
     restart: on-failure
     environment:
       DB_HOST: auth-pg
-  
+
   auth-redis:
     image: redis:7.2.5-alpine3.20
     ports:

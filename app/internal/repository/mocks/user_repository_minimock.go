@@ -19,12 +19,6 @@ type UserRepositoryMock struct {
 	t          minimock.Tester
 	finishOnce sync.Once
 
-	funcCreateAPILog          func(ctx context.Context, params model.CreateAPILogParams) (err error)
-	inspectFuncCreateAPILog   func(ctx context.Context, params model.CreateAPILogParams)
-	afterCreateAPILogCounter  uint64
-	beforeCreateAPILogCounter uint64
-	CreateAPILogMock          mUserRepositoryMockCreateAPILog
-
 	funcCreateUser          func(ctx context.Context, params model.CreateUserParams) (resp model.CreateUserResponse, err error)
 	inspectFuncCreateUser   func(ctx context.Context, params model.CreateUserParams)
 	afterCreateUserCounter  uint64
@@ -43,7 +37,7 @@ type UserRepositoryMock struct {
 	beforeGetUserCounter uint64
 	GetUserMock          mUserRepositoryMockGetUser
 
-	funcUpdateUser          func(ctx context.Context, params model.UpdateUserParams) (err error)
+	funcUpdateUser          func(ctx context.Context, params model.UpdateUserParams) (resp model.UpdateUserResponse, err error)
 	inspectFuncUpdateUser   func(ctx context.Context, params model.UpdateUserParams)
 	afterUpdateUserCounter  uint64
 	beforeUpdateUserCounter uint64
@@ -57,9 +51,6 @@ func NewUserRepositoryMock(t minimock.Tester) *UserRepositoryMock {
 	if controller, ok := t.(minimock.MockController); ok {
 		controller.RegisterMocker(m)
 	}
-
-	m.CreateAPILogMock = mUserRepositoryMockCreateAPILog{mock: m}
-	m.CreateAPILogMock.callArgs = []*UserRepositoryMockCreateAPILogParams{}
 
 	m.CreateUserMock = mUserRepositoryMockCreateUser{mock: m}
 	m.CreateUserMock.callArgs = []*UserRepositoryMockCreateUserParams{}
@@ -76,326 +67,6 @@ func NewUserRepositoryMock(t minimock.Tester) *UserRepositoryMock {
 	t.Cleanup(m.MinimockFinish)
 
 	return m
-}
-
-type mUserRepositoryMockCreateAPILog struct {
-	optional           bool
-	mock               *UserRepositoryMock
-	defaultExpectation *UserRepositoryMockCreateAPILogExpectation
-	expectations       []*UserRepositoryMockCreateAPILogExpectation
-
-	callArgs []*UserRepositoryMockCreateAPILogParams
-	mutex    sync.RWMutex
-
-	expectedInvocations uint64
-}
-
-// UserRepositoryMockCreateAPILogExpectation specifies expectation struct of the UserRepository.CreateAPILog
-type UserRepositoryMockCreateAPILogExpectation struct {
-	mock      *UserRepositoryMock
-	params    *UserRepositoryMockCreateAPILogParams
-	paramPtrs *UserRepositoryMockCreateAPILogParamPtrs
-	results   *UserRepositoryMockCreateAPILogResults
-	Counter   uint64
-}
-
-// UserRepositoryMockCreateAPILogParams contains parameters of the UserRepository.CreateAPILog
-type UserRepositoryMockCreateAPILogParams struct {
-	ctx    context.Context
-	params model.CreateAPILogParams
-}
-
-// UserRepositoryMockCreateAPILogParamPtrs contains pointers to parameters of the UserRepository.CreateAPILog
-type UserRepositoryMockCreateAPILogParamPtrs struct {
-	ctx    *context.Context
-	params *model.CreateAPILogParams
-}
-
-// UserRepositoryMockCreateAPILogResults contains results of the UserRepository.CreateAPILog
-type UserRepositoryMockCreateAPILogResults struct {
-	err error
-}
-
-// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
-// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
-// Optional() makes method check to work in '0 or more' mode.
-// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
-// catch the problems when the expected method call is totally skipped during test run.
-func (mmCreateAPILog *mUserRepositoryMockCreateAPILog) Optional() *mUserRepositoryMockCreateAPILog {
-	mmCreateAPILog.optional = true
-	return mmCreateAPILog
-}
-
-// Expect sets up expected params for UserRepository.CreateAPILog
-func (mmCreateAPILog *mUserRepositoryMockCreateAPILog) Expect(ctx context.Context, params model.CreateAPILogParams) *mUserRepositoryMockCreateAPILog {
-	if mmCreateAPILog.mock.funcCreateAPILog != nil {
-		mmCreateAPILog.mock.t.Fatalf("UserRepositoryMock.CreateAPILog mock is already set by Set")
-	}
-
-	if mmCreateAPILog.defaultExpectation == nil {
-		mmCreateAPILog.defaultExpectation = &UserRepositoryMockCreateAPILogExpectation{}
-	}
-
-	if mmCreateAPILog.defaultExpectation.paramPtrs != nil {
-		mmCreateAPILog.mock.t.Fatalf("UserRepositoryMock.CreateAPILog mock is already set by ExpectParams functions")
-	}
-
-	mmCreateAPILog.defaultExpectation.params = &UserRepositoryMockCreateAPILogParams{ctx, params}
-	for _, e := range mmCreateAPILog.expectations {
-		if minimock.Equal(e.params, mmCreateAPILog.defaultExpectation.params) {
-			mmCreateAPILog.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmCreateAPILog.defaultExpectation.params)
-		}
-	}
-
-	return mmCreateAPILog
-}
-
-// ExpectCtxParam1 sets up expected param ctx for UserRepository.CreateAPILog
-func (mmCreateAPILog *mUserRepositoryMockCreateAPILog) ExpectCtxParam1(ctx context.Context) *mUserRepositoryMockCreateAPILog {
-	if mmCreateAPILog.mock.funcCreateAPILog != nil {
-		mmCreateAPILog.mock.t.Fatalf("UserRepositoryMock.CreateAPILog mock is already set by Set")
-	}
-
-	if mmCreateAPILog.defaultExpectation == nil {
-		mmCreateAPILog.defaultExpectation = &UserRepositoryMockCreateAPILogExpectation{}
-	}
-
-	if mmCreateAPILog.defaultExpectation.params != nil {
-		mmCreateAPILog.mock.t.Fatalf("UserRepositoryMock.CreateAPILog mock is already set by Expect")
-	}
-
-	if mmCreateAPILog.defaultExpectation.paramPtrs == nil {
-		mmCreateAPILog.defaultExpectation.paramPtrs = &UserRepositoryMockCreateAPILogParamPtrs{}
-	}
-	mmCreateAPILog.defaultExpectation.paramPtrs.ctx = &ctx
-
-	return mmCreateAPILog
-}
-
-// ExpectParamsParam2 sets up expected param params for UserRepository.CreateAPILog
-func (mmCreateAPILog *mUserRepositoryMockCreateAPILog) ExpectParamsParam2(params model.CreateAPILogParams) *mUserRepositoryMockCreateAPILog {
-	if mmCreateAPILog.mock.funcCreateAPILog != nil {
-		mmCreateAPILog.mock.t.Fatalf("UserRepositoryMock.CreateAPILog mock is already set by Set")
-	}
-
-	if mmCreateAPILog.defaultExpectation == nil {
-		mmCreateAPILog.defaultExpectation = &UserRepositoryMockCreateAPILogExpectation{}
-	}
-
-	if mmCreateAPILog.defaultExpectation.params != nil {
-		mmCreateAPILog.mock.t.Fatalf("UserRepositoryMock.CreateAPILog mock is already set by Expect")
-	}
-
-	if mmCreateAPILog.defaultExpectation.paramPtrs == nil {
-		mmCreateAPILog.defaultExpectation.paramPtrs = &UserRepositoryMockCreateAPILogParamPtrs{}
-	}
-	mmCreateAPILog.defaultExpectation.paramPtrs.params = &params
-
-	return mmCreateAPILog
-}
-
-// Inspect accepts an inspector function that has same arguments as the UserRepository.CreateAPILog
-func (mmCreateAPILog *mUserRepositoryMockCreateAPILog) Inspect(f func(ctx context.Context, params model.CreateAPILogParams)) *mUserRepositoryMockCreateAPILog {
-	if mmCreateAPILog.mock.inspectFuncCreateAPILog != nil {
-		mmCreateAPILog.mock.t.Fatalf("Inspect function is already set for UserRepositoryMock.CreateAPILog")
-	}
-
-	mmCreateAPILog.mock.inspectFuncCreateAPILog = f
-
-	return mmCreateAPILog
-}
-
-// Return sets up results that will be returned by UserRepository.CreateAPILog
-func (mmCreateAPILog *mUserRepositoryMockCreateAPILog) Return(err error) *UserRepositoryMock {
-	if mmCreateAPILog.mock.funcCreateAPILog != nil {
-		mmCreateAPILog.mock.t.Fatalf("UserRepositoryMock.CreateAPILog mock is already set by Set")
-	}
-
-	if mmCreateAPILog.defaultExpectation == nil {
-		mmCreateAPILog.defaultExpectation = &UserRepositoryMockCreateAPILogExpectation{mock: mmCreateAPILog.mock}
-	}
-	mmCreateAPILog.defaultExpectation.results = &UserRepositoryMockCreateAPILogResults{err}
-	return mmCreateAPILog.mock
-}
-
-// Set uses given function f to mock the UserRepository.CreateAPILog method
-func (mmCreateAPILog *mUserRepositoryMockCreateAPILog) Set(f func(ctx context.Context, params model.CreateAPILogParams) (err error)) *UserRepositoryMock {
-	if mmCreateAPILog.defaultExpectation != nil {
-		mmCreateAPILog.mock.t.Fatalf("Default expectation is already set for the UserRepository.CreateAPILog method")
-	}
-
-	if len(mmCreateAPILog.expectations) > 0 {
-		mmCreateAPILog.mock.t.Fatalf("Some expectations are already set for the UserRepository.CreateAPILog method")
-	}
-
-	mmCreateAPILog.mock.funcCreateAPILog = f
-	return mmCreateAPILog.mock
-}
-
-// When sets expectation for the UserRepository.CreateAPILog which will trigger the result defined by the following
-// Then helper
-func (mmCreateAPILog *mUserRepositoryMockCreateAPILog) When(ctx context.Context, params model.CreateAPILogParams) *UserRepositoryMockCreateAPILogExpectation {
-	if mmCreateAPILog.mock.funcCreateAPILog != nil {
-		mmCreateAPILog.mock.t.Fatalf("UserRepositoryMock.CreateAPILog mock is already set by Set")
-	}
-
-	expectation := &UserRepositoryMockCreateAPILogExpectation{
-		mock:   mmCreateAPILog.mock,
-		params: &UserRepositoryMockCreateAPILogParams{ctx, params},
-	}
-	mmCreateAPILog.expectations = append(mmCreateAPILog.expectations, expectation)
-	return expectation
-}
-
-// Then sets up UserRepository.CreateAPILog return parameters for the expectation previously defined by the When method
-func (e *UserRepositoryMockCreateAPILogExpectation) Then(err error) *UserRepositoryMock {
-	e.results = &UserRepositoryMockCreateAPILogResults{err}
-	return e.mock
-}
-
-// Times sets number of times UserRepository.CreateAPILog should be invoked
-func (mmCreateAPILog *mUserRepositoryMockCreateAPILog) Times(n uint64) *mUserRepositoryMockCreateAPILog {
-	if n == 0 {
-		mmCreateAPILog.mock.t.Fatalf("Times of UserRepositoryMock.CreateAPILog mock can not be zero")
-	}
-	mm_atomic.StoreUint64(&mmCreateAPILog.expectedInvocations, n)
-	return mmCreateAPILog
-}
-
-func (mmCreateAPILog *mUserRepositoryMockCreateAPILog) invocationsDone() bool {
-	if len(mmCreateAPILog.expectations) == 0 && mmCreateAPILog.defaultExpectation == nil && mmCreateAPILog.mock.funcCreateAPILog == nil {
-		return true
-	}
-
-	totalInvocations := mm_atomic.LoadUint64(&mmCreateAPILog.mock.afterCreateAPILogCounter)
-	expectedInvocations := mm_atomic.LoadUint64(&mmCreateAPILog.expectedInvocations)
-
-	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
-}
-
-// CreateAPILog implements repository.UserRepository
-func (mmCreateAPILog *UserRepositoryMock) CreateAPILog(ctx context.Context, params model.CreateAPILogParams) (err error) {
-	mm_atomic.AddUint64(&mmCreateAPILog.beforeCreateAPILogCounter, 1)
-	defer mm_atomic.AddUint64(&mmCreateAPILog.afterCreateAPILogCounter, 1)
-
-	if mmCreateAPILog.inspectFuncCreateAPILog != nil {
-		mmCreateAPILog.inspectFuncCreateAPILog(ctx, params)
-	}
-
-	mm_params := UserRepositoryMockCreateAPILogParams{ctx, params}
-
-	// Record call args
-	mmCreateAPILog.CreateAPILogMock.mutex.Lock()
-	mmCreateAPILog.CreateAPILogMock.callArgs = append(mmCreateAPILog.CreateAPILogMock.callArgs, &mm_params)
-	mmCreateAPILog.CreateAPILogMock.mutex.Unlock()
-
-	for _, e := range mmCreateAPILog.CreateAPILogMock.expectations {
-		if minimock.Equal(*e.params, mm_params) {
-			mm_atomic.AddUint64(&e.Counter, 1)
-			return e.results.err
-		}
-	}
-
-	if mmCreateAPILog.CreateAPILogMock.defaultExpectation != nil {
-		mm_atomic.AddUint64(&mmCreateAPILog.CreateAPILogMock.defaultExpectation.Counter, 1)
-		mm_want := mmCreateAPILog.CreateAPILogMock.defaultExpectation.params
-		mm_want_ptrs := mmCreateAPILog.CreateAPILogMock.defaultExpectation.paramPtrs
-
-		mm_got := UserRepositoryMockCreateAPILogParams{ctx, params}
-
-		if mm_want_ptrs != nil {
-
-			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
-				mmCreateAPILog.t.Errorf("UserRepositoryMock.CreateAPILog got unexpected parameter ctx, want: %#v, got: %#v%s\n", *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
-			}
-
-			if mm_want_ptrs.params != nil && !minimock.Equal(*mm_want_ptrs.params, mm_got.params) {
-				mmCreateAPILog.t.Errorf("UserRepositoryMock.CreateAPILog got unexpected parameter params, want: %#v, got: %#v%s\n", *mm_want_ptrs.params, mm_got.params, minimock.Diff(*mm_want_ptrs.params, mm_got.params))
-			}
-
-		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
-			mmCreateAPILog.t.Errorf("UserRepositoryMock.CreateAPILog got unexpected parameters, want: %#v, got: %#v%s\n", *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
-		}
-
-		mm_results := mmCreateAPILog.CreateAPILogMock.defaultExpectation.results
-		if mm_results == nil {
-			mmCreateAPILog.t.Fatal("No results are set for the UserRepositoryMock.CreateAPILog")
-		}
-		return (*mm_results).err
-	}
-	if mmCreateAPILog.funcCreateAPILog != nil {
-		return mmCreateAPILog.funcCreateAPILog(ctx, params)
-	}
-	mmCreateAPILog.t.Fatalf("Unexpected call to UserRepositoryMock.CreateAPILog. %v %v", ctx, params)
-	return
-}
-
-// CreateAPILogAfterCounter returns a count of finished UserRepositoryMock.CreateAPILog invocations
-func (mmCreateAPILog *UserRepositoryMock) CreateAPILogAfterCounter() uint64 {
-	return mm_atomic.LoadUint64(&mmCreateAPILog.afterCreateAPILogCounter)
-}
-
-// CreateAPILogBeforeCounter returns a count of UserRepositoryMock.CreateAPILog invocations
-func (mmCreateAPILog *UserRepositoryMock) CreateAPILogBeforeCounter() uint64 {
-	return mm_atomic.LoadUint64(&mmCreateAPILog.beforeCreateAPILogCounter)
-}
-
-// Calls returns a list of arguments used in each call to UserRepositoryMock.CreateAPILog.
-// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
-func (mmCreateAPILog *mUserRepositoryMockCreateAPILog) Calls() []*UserRepositoryMockCreateAPILogParams {
-	mmCreateAPILog.mutex.RLock()
-
-	argCopy := make([]*UserRepositoryMockCreateAPILogParams, len(mmCreateAPILog.callArgs))
-	copy(argCopy, mmCreateAPILog.callArgs)
-
-	mmCreateAPILog.mutex.RUnlock()
-
-	return argCopy
-}
-
-// MinimockCreateAPILogDone returns true if the count of the CreateAPILog invocations corresponds
-// the number of defined expectations
-func (m *UserRepositoryMock) MinimockCreateAPILogDone() bool {
-	if m.CreateAPILogMock.optional {
-		// Optional methods provide '0 or more' call count restriction.
-		return true
-	}
-
-	for _, e := range m.CreateAPILogMock.expectations {
-		if mm_atomic.LoadUint64(&e.Counter) < 1 {
-			return false
-		}
-	}
-
-	return m.CreateAPILogMock.invocationsDone()
-}
-
-// MinimockCreateAPILogInspect logs each unmet expectation
-func (m *UserRepositoryMock) MinimockCreateAPILogInspect() {
-	for _, e := range m.CreateAPILogMock.expectations {
-		if mm_atomic.LoadUint64(&e.Counter) < 1 {
-			m.t.Errorf("Expected call to UserRepositoryMock.CreateAPILog with params: %#v", *e.params)
-		}
-	}
-
-	afterCreateAPILogCounter := mm_atomic.LoadUint64(&m.afterCreateAPILogCounter)
-	// if default expectation was set then invocations count should be greater than zero
-	if m.CreateAPILogMock.defaultExpectation != nil && afterCreateAPILogCounter < 1 {
-		if m.CreateAPILogMock.defaultExpectation.params == nil {
-			m.t.Error("Expected call to UserRepositoryMock.CreateAPILog")
-		} else {
-			m.t.Errorf("Expected call to UserRepositoryMock.CreateAPILog with params: %#v", *m.CreateAPILogMock.defaultExpectation.params)
-		}
-	}
-	// if func was set then invocations count should be greater than zero
-	if m.funcCreateAPILog != nil && afterCreateAPILogCounter < 1 {
-		m.t.Error("Expected call to UserRepositoryMock.CreateAPILog")
-	}
-
-	if !m.CreateAPILogMock.invocationsDone() && afterCreateAPILogCounter > 0 {
-		m.t.Errorf("Expected %d calls to UserRepositoryMock.CreateAPILog but found %d calls",
-			mm_atomic.LoadUint64(&m.CreateAPILogMock.expectedInvocations), afterCreateAPILogCounter)
-	}
 }
 
 type mUserRepositoryMockCreateUser struct {
@@ -1395,7 +1066,8 @@ type UserRepositoryMockUpdateUserParamPtrs struct {
 
 // UserRepositoryMockUpdateUserResults contains results of the UserRepository.UpdateUser
 type UserRepositoryMockUpdateUserResults struct {
-	err error
+	resp model.UpdateUserResponse
+	err  error
 }
 
 // Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
@@ -1488,7 +1160,7 @@ func (mmUpdateUser *mUserRepositoryMockUpdateUser) Inspect(f func(ctx context.Co
 }
 
 // Return sets up results that will be returned by UserRepository.UpdateUser
-func (mmUpdateUser *mUserRepositoryMockUpdateUser) Return(err error) *UserRepositoryMock {
+func (mmUpdateUser *mUserRepositoryMockUpdateUser) Return(resp model.UpdateUserResponse, err error) *UserRepositoryMock {
 	if mmUpdateUser.mock.funcUpdateUser != nil {
 		mmUpdateUser.mock.t.Fatalf("UserRepositoryMock.UpdateUser mock is already set by Set")
 	}
@@ -1496,12 +1168,12 @@ func (mmUpdateUser *mUserRepositoryMockUpdateUser) Return(err error) *UserReposi
 	if mmUpdateUser.defaultExpectation == nil {
 		mmUpdateUser.defaultExpectation = &UserRepositoryMockUpdateUserExpectation{mock: mmUpdateUser.mock}
 	}
-	mmUpdateUser.defaultExpectation.results = &UserRepositoryMockUpdateUserResults{err}
+	mmUpdateUser.defaultExpectation.results = &UserRepositoryMockUpdateUserResults{resp, err}
 	return mmUpdateUser.mock
 }
 
 // Set uses given function f to mock the UserRepository.UpdateUser method
-func (mmUpdateUser *mUserRepositoryMockUpdateUser) Set(f func(ctx context.Context, params model.UpdateUserParams) (err error)) *UserRepositoryMock {
+func (mmUpdateUser *mUserRepositoryMockUpdateUser) Set(f func(ctx context.Context, params model.UpdateUserParams) (resp model.UpdateUserResponse, err error)) *UserRepositoryMock {
 	if mmUpdateUser.defaultExpectation != nil {
 		mmUpdateUser.mock.t.Fatalf("Default expectation is already set for the UserRepository.UpdateUser method")
 	}
@@ -1530,8 +1202,8 @@ func (mmUpdateUser *mUserRepositoryMockUpdateUser) When(ctx context.Context, par
 }
 
 // Then sets up UserRepository.UpdateUser return parameters for the expectation previously defined by the When method
-func (e *UserRepositoryMockUpdateUserExpectation) Then(err error) *UserRepositoryMock {
-	e.results = &UserRepositoryMockUpdateUserResults{err}
+func (e *UserRepositoryMockUpdateUserExpectation) Then(resp model.UpdateUserResponse, err error) *UserRepositoryMock {
+	e.results = &UserRepositoryMockUpdateUserResults{resp, err}
 	return e.mock
 }
 
@@ -1556,7 +1228,7 @@ func (mmUpdateUser *mUserRepositoryMockUpdateUser) invocationsDone() bool {
 }
 
 // UpdateUser implements repository.UserRepository
-func (mmUpdateUser *UserRepositoryMock) UpdateUser(ctx context.Context, params model.UpdateUserParams) (err error) {
+func (mmUpdateUser *UserRepositoryMock) UpdateUser(ctx context.Context, params model.UpdateUserParams) (resp model.UpdateUserResponse, err error) {
 	mm_atomic.AddUint64(&mmUpdateUser.beforeUpdateUserCounter, 1)
 	defer mm_atomic.AddUint64(&mmUpdateUser.afterUpdateUserCounter, 1)
 
@@ -1574,7 +1246,7 @@ func (mmUpdateUser *UserRepositoryMock) UpdateUser(ctx context.Context, params m
 	for _, e := range mmUpdateUser.UpdateUserMock.expectations {
 		if minimock.Equal(*e.params, mm_params) {
 			mm_atomic.AddUint64(&e.Counter, 1)
-			return e.results.err
+			return e.results.resp, e.results.err
 		}
 	}
 
@@ -1603,7 +1275,7 @@ func (mmUpdateUser *UserRepositoryMock) UpdateUser(ctx context.Context, params m
 		if mm_results == nil {
 			mmUpdateUser.t.Fatal("No results are set for the UserRepositoryMock.UpdateUser")
 		}
-		return (*mm_results).err
+		return (*mm_results).resp, (*mm_results).err
 	}
 	if mmUpdateUser.funcUpdateUser != nil {
 		return mmUpdateUser.funcUpdateUser(ctx, params)
@@ -1684,8 +1356,6 @@ func (m *UserRepositoryMock) MinimockUpdateUserInspect() {
 func (m *UserRepositoryMock) MinimockFinish() {
 	m.finishOnce.Do(func() {
 		if !m.minimockDone() {
-			m.MinimockCreateAPILogInspect()
-
 			m.MinimockCreateUserInspect()
 
 			m.MinimockDeleteUserInspect()
@@ -1716,7 +1386,6 @@ func (m *UserRepositoryMock) MinimockWait(timeout mm_time.Duration) {
 func (m *UserRepositoryMock) minimockDone() bool {
 	done := true
 	return done &&
-		m.MinimockCreateAPILogDone() &&
 		m.MinimockCreateUserDone() &&
 		m.MinimockDeleteUserDone() &&
 		m.MinimockGetUserDone() &&

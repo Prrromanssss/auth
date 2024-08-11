@@ -58,12 +58,14 @@ func TestGet(t *testing.T) {
 		}
 
 		serviceResp = model.GetUserResponse{
-			UserID:    id,
-			Name:      name,
-			Email:     email,
-			Role:      int64(role),
-			CreatedAt: createdAt,
-			UpdatedAt: updatedAt,
+			User: model.User{
+				UserID:    id,
+				Name:      name,
+				Email:     email,
+				Role:      int64(role),
+				CreatedAt: createdAt,
+				UpdatedAt: updatedAt,
+			},
 		}
 	)
 

@@ -12,6 +12,7 @@ import (
 	"github.com/gojuno/minimock/v3"
 	"github.com/stretchr/testify/require"
 
+	"github.com/Prrromanssss/auth/internal/cache"
 	"github.com/Prrromanssss/auth/internal/model"
 	"github.com/Prrromanssss/auth/internal/repository"
 	repositoryMocks "github.com/Prrromanssss/auth/internal/repository/mocks"
@@ -25,6 +26,7 @@ func TestGet(t *testing.T) {
 	type (
 		userRepositoryMockFunc func(mc *minimock.Controller) repository.UserRepository
 		txManagerMockFunc      func(f func(context.Context) error, mc *minimock.Controller) db.TxManager
+		cacheMockFunc          func(mc *minimock.Controller) cache.UserCache
 	)
 
 	type args struct {
@@ -51,12 +53,14 @@ func TestGet(t *testing.T) {
 		}
 
 		resp = model.GetUserResponse{
-			UserID:    id,
-			Name:      name,
-			Email:     email,
-			Role:      int64(role),
-			CreatedAt: createdAt,
-			UpdatedAt: updatedAt,
+			User: model.User{
+				UserID:    id,
+				Name:      name,
+				Email:     email,
+				Role:      int64(role),
+				CreatedAt: createdAt,
+				UpdatedAt: updatedAt,
+			},
 		}
 	)
 

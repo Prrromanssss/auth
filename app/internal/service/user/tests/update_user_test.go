@@ -12,6 +12,7 @@ import (
 	"github.com/gojuno/minimock/v3"
 	"github.com/stretchr/testify/require"
 
+	"github.com/Prrromanssss/auth/internal/cache"
 	"github.com/Prrromanssss/auth/internal/model"
 	"github.com/Prrromanssss/auth/internal/repository"
 	repositoryMocks "github.com/Prrromanssss/auth/internal/repository/mocks"
@@ -25,6 +26,7 @@ func TestUpdate(t *testing.T) {
 	type (
 		userRepositoryMockFunc func(mc *minimock.Controller) repository.UserRepository
 		txManagerMockFunc      func(f func(context.Context) error, mc *minimock.Controller) db.TxManager
+		cacheMockFunc          func(mc *minimock.Controller) cache.UserCache
 	)
 
 	type args struct {
@@ -65,6 +67,7 @@ func TestUpdate(t *testing.T) {
 		args               args
 		err                error
 		userRepositoryMock userRepositoryMockFunc
+		cacheMock          cacheMockFunc
 		txManagerMock      txManagerMockFunc
 	}{
 		{
@@ -79,6 +82,11 @@ func TestUpdate(t *testing.T) {
 				mock.UpdateUserMock.Expect(ctx, req).Return(nil)
 				mock.CreateAPILogMock.Expect(ctx, logApiReq).Return(nil)
 
+				return mock
+			},
+			cacheMock: func(mc *minimock.Controller) cache.UserCache {
+				mock := mocks2.NewUserCacheMock(mc)
+				mock.CreateMock.Expect(ctx, cacheUser).Return(nil)
 				return mock
 			},
 			txManagerMock: func(f func(context.Context) error, mc *minimock.Controller) db.TxManager {
@@ -142,6 +150,7 @@ func TestUpdate(t *testing.T) {
 			t.Parallel()
 
 			userRepositoryMock := tt.userRepositoryMock(mc)
+			cacheMock := tt.cacheMock(mc)
 			txManagerMock := tt.txManagerMock(func(ctx context.Context) error {
 				txErr := userRepositoryMock.UpdateUser(ctx, req)
 				if txErr != nil {

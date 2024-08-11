@@ -15,7 +15,12 @@ type CreateUserParams struct {
 
 // CreateUserResponse represents the response after creating a new user.
 type CreateUserResponse struct {
-	UserID int64 `db:"id"`
+	UserID    int64     `db:"id"`
+	Name      string    `db:"name"`
+	Email     string    `db:"email"`
+	Role      int64     `db:"role_id"`
+	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
 }
 
 // GetUserParams holds the parameters for retrieving a user by ID.
@@ -40,14 +45,17 @@ type UpdateUserParams struct {
 	Role   int64          `db:"role_id"`
 }
 
+// UpdateUserResponse represents the response after creating a new user.
+type UpdateUserResponse struct {
+	UserID    int64     `db:"id"`
+	Name      string    `db:"name"`
+	Email     string    `db:"email"`
+	Role      int64     `db:"role_id"`
+	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
+}
+
 // DeleteUserParams holds the parameters for deleting a user by ID.
 type DeleteUserParams struct {
 	UserID int64 `db:"id"`
-}
-
-// CreateAPILogParams holds the parameters for logging API actions related to user creation.
-type CreateAPILogParams struct {
-	Method       string         `db:"action_type"`
-	RequestData  string         `db:"request_data"`
-	ResponseData sql.NullString `db:"response_data"`
 }
