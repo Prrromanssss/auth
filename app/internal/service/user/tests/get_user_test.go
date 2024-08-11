@@ -258,7 +258,7 @@ func TestGet(t *testing.T) {
 			},
 		},
 		{
-			name: "cache error",
+			name: "cache error in Create",
 			args: args{
 				ctx: ctx,
 				req: req,
@@ -281,6 +281,41 @@ func TestGet(t *testing.T) {
 				mock := cacheMocks.NewUserCacheMock(mc)
 				mock.GetMock.Expect(ctx, req).Return(model.GetUserResponse{}, modelCache.ErrUserNotFound)
 				mock.CreateMock.Expect(ctx, resp.User).Return(ErrCache)
+
+				return mock
+			},
+			txManagerMock: func(f func(context.Context) error, mc *minimock.Controller) db.TxManager {
+				mock := dbMocks.NewTxManagerMock(mc)
+				mock.ReadCommittedMock.Optional().Set(func(ctx context.Context, f db.Handler) (err error) {
+					return f(ctx)
+				})
+
+				return mock
+			},
+		},
+		{
+			name: "cache error in Get",
+			args: args{
+				ctx: ctx,
+				req: req,
+			},
+			want: resp,
+			err:  nil,
+			userRepositoryMock: func(mc *minimock.Controller) repository.UserRepository {
+				mock := repositoryMocks.NewUserRepositoryMock(mc)
+				mock.GetUserMock.Expect(ctx, req).Return(resp, nil)
+
+				return mock
+			},
+			logRepositoryMock: func(mc *minimock.Controller) repository.LogRepository {
+				mock := repositoryMocks.NewLogRepositoryMock(mc)
+				mock.CreateAPILogMock.Expect(ctx, logApiReq).Return(nil)
+
+				return mock
+			},
+			cacheMock: func(mc *minimock.Controller) cache.UserCache {
+				mock := cacheMocks.NewUserCacheMock(mc)
+				mock.GetMock.Expect(ctx, req).Return(model.GetUserResponse{}, ErrCache)
 
 				return mock
 			},
