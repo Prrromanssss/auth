@@ -2,7 +2,6 @@ package tests
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"testing"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/Prrromanssss/auth/internal/cache"
+	cacheMocks "github.com/Prrromanssss/auth/internal/cache/mocks"
 	"github.com/Prrromanssss/auth/internal/model"
 	"github.com/Prrromanssss/auth/internal/repository"
 	repositoryMocks "github.com/Prrromanssss/auth/internal/repository/mocks"
@@ -24,6 +24,7 @@ func TestDelete(t *testing.T) {
 
 	type (
 		userRepositoryMockFunc func(mc *minimock.Controller) repository.UserRepository
+		logRepositoryMockFunc  func(mc *minimock.Controller) repository.LogRepository
 		txManagerMockFunc      func(f func(context.Context) error, mc *minimock.Controller) db.TxManager
 		cacheMockFunc          func(mc *minimock.Controller) cache.UserCache
 	)
@@ -39,29 +40,27 @@ func TestDelete(t *testing.T) {
 
 		id = gofakeit.Int64()
 
-		ErrRepository    = errors.New("repository error")
-		ErrRepositoryLog = errors.New("repository error in CreateAPILog")
+		ErrUserRepository = errors.New("user repository error")
+		ErrLogRepository  = errors.New("log repository error")
+		ErrCache          = errors.New("cache error")
 
 		req = model.DeleteUserParams{
 			UserID: id,
 		}
+
+		logApiReq = model.CreateAPILogParams{
+			Method:      "Delete",
+			RequestData: req,
+		}
 	)
-
-	requestData, err := json.Marshal(req)
-	if err != nil {
-		t.Error(err)
-	}
-
-	logApiReq := model.CreateAPILogParams{
-		Method:      "Delete",
-		RequestData: string(requestData),
-	}
 
 	tests := []struct {
 		name               string
 		args               args
 		err                error
 		userRepositoryMock userRepositoryMockFunc
+		logRepositoryMock  logRepositoryMockFunc
+		cacheMock          cacheMockFunc
 		txManagerMock      txManagerMockFunc
 	}{
 		{
@@ -74,10 +73,21 @@ func TestDelete(t *testing.T) {
 			userRepositoryMock: func(mc *minimock.Controller) repository.UserRepository {
 				mock := repositoryMocks.NewUserRepositoryMock(mc)
 				mock.DeleteUserMock.Expect(ctx, req).Return(nil)
+
+				return mock
+			},
+			logRepositoryMock: func(mc *minimock.Controller) repository.LogRepository {
+				mock := repositoryMocks.NewLogRepositoryMock(mc)
 				mock.CreateAPILogMock.Expect(ctx, logApiReq).Return(nil)
 
 				return mock
 			},
+			cacheMock: func(mc *minimock.Controller) cache.UserCache {
+				mock := cacheMocks.NewUserCacheMock(mc)
+				mock.DeleteMock.Expect(ctx, req).Return(nil)
+
+				return mock
+			},
 			txManagerMock: func(f func(context.Context) error, mc *minimock.Controller) db.TxManager {
 				mock := dbMocks.NewTxManagerMock(mc)
 				mock.ReadCommittedMock.Optional().Set(func(ctx context.Context, f db.Handler) (err error) {
@@ -88,15 +98,25 @@ func TestDelete(t *testing.T) {
 			},
 		},
 		{
-			name: "repository error case",
+			name: "user repository error case",
 			args: args{
 				ctx: ctx,
 				req: req,
 			},
-			err: ErrRepository,
+			err: ErrUserRepository,
 			userRepositoryMock: func(mc *minimock.Controller) repository.UserRepository {
 				mock := repositoryMocks.NewUserRepositoryMock(mc)
-				mock.DeleteUserMock.Expect(ctx, req).Return(ErrRepository)
+				mock.DeleteUserMock.Expect(ctx, req).Return(ErrUserRepository)
+
+				return mock
+			},
+			logRepositoryMock: func(mc *minimock.Controller) repository.LogRepository {
+				mock := repositoryMocks.NewLogRepositoryMock(mc)
+
+				return mock
+			},
+			cacheMock: func(mc *minimock.Controller) cache.UserCache {
+				mock := cacheMocks.NewUserCacheMock(mc)
 
 				return mock
 			},
@@ -110,16 +130,60 @@ func TestDelete(t *testing.T) {
 			},
 		},
 		{
-			name: "repository error in CreateAPILog",
+			name: "log repository error",
 			args: args{
 				ctx: ctx,
 				req: req,
 			},
-			err: ErrRepositoryLog,
+			err: ErrLogRepository,
 			userRepositoryMock: func(mc *minimock.Controller) repository.UserRepository {
 				mock := repositoryMocks.NewUserRepositoryMock(mc)
 				mock.DeleteUserMock.Expect(ctx, req).Return(nil)
-				mock.CreateAPILogMock.Expect(ctx, logApiReq).Return(ErrRepositoryLog)
+
+				return mock
+			},
+			logRepositoryMock: func(mc *minimock.Controller) repository.LogRepository {
+				mock := repositoryMocks.NewLogRepositoryMock(mc)
+				mock.CreateAPILogMock.Expect(ctx, logApiReq).Return(ErrLogRepository)
+
+				return mock
+			},
+			cacheMock: func(mc *minimock.Controller) cache.UserCache {
+				mock := cacheMocks.NewUserCacheMock(mc)
+
+				return mock
+			},
+			txManagerMock: func(f func(context.Context) error, mc *minimock.Controller) db.TxManager {
+				mock := dbMocks.NewTxManagerMock(mc)
+				mock.ReadCommittedMock.Optional().Set(func(ctx context.Context, f db.Handler) (err error) {
+					return f(ctx)
+				})
+
+				return mock
+			},
+		},
+		{
+			name: "cache error",
+			args: args{
+				ctx: ctx,
+				req: req,
+			},
+			err: nil,
+			userRepositoryMock: func(mc *minimock.Controller) repository.UserRepository {
+				mock := repositoryMocks.NewUserRepositoryMock(mc)
+				mock.DeleteUserMock.Expect(ctx, req).Return(nil)
+
+				return mock
+			},
+			logRepositoryMock: func(mc *minimock.Controller) repository.LogRepository {
+				mock := repositoryMocks.NewLogRepositoryMock(mc)
+				mock.CreateAPILogMock.Expect(ctx, logApiReq).Return(nil)
+
+				return mock
+			},
+			cacheMock: func(mc *minimock.Controller) cache.UserCache {
+				mock := cacheMocks.NewUserCacheMock(mc)
+				mock.DeleteMock.Expect(ctx, req).Return(ErrCache)
 
 				return mock
 			},
@@ -139,29 +203,26 @@ func TestDelete(t *testing.T) {
 			t.Parallel()
 
 			userRepositoryMock := tt.userRepositoryMock(mc)
+			logRepositoryMock := tt.logRepositoryMock(mc)
+			cacheMock := tt.cacheMock(mc)
 			txManagerMock := tt.txManagerMock(func(ctx context.Context) error {
 				txErr := userRepositoryMock.DeleteUser(ctx, req)
 				if txErr != nil {
 					return txErr
 				}
 
-				requestData, txErr := json.Marshal(req)
-				if txErr != nil {
-					return txErr
-				}
-
-				txErr = userRepositoryMock.CreateAPILog(ctx, model.CreateAPILogParams{
+				txErr = logRepositoryMock.CreateAPILog(ctx, model.CreateAPILogParams{
 					Method:      "Delete",
-					RequestData: string(requestData),
+					RequestData: req,
 				})
-
 				if txErr != nil {
 					return txErr
 				}
 
 				return nil
 			}, mc)
-			service := userService.NewService(userRepositoryMock, txManagerMock)
+
+			service := userService.NewService(userRepositoryMock, logRepositoryMock, cacheMock, txManagerMock)
 
 			err := service.DeleteUser(tt.args.ctx, tt.args.req)
 			require.Equal(t, tt.err, err)

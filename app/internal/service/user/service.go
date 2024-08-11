@@ -132,11 +132,6 @@ func (s *userService) UpdateUser(
 
 	var resp model.UpdateUserResponse
 
-	cacheErr := s.cacheClient.Delete(ctx, model.DeleteUserParams{UserID: params.UserID})
-	if cacheErr != nil {
-		log.Warnf("Failed to delete user from cache before update, UserID: %d, err: %v", params.UserID, cacheErr)
-	}
-
 	err = s.txManager.ReadCommitted(ctx, func(ctx context.Context) error {
 		var txErr error
 
@@ -160,7 +155,7 @@ func (s *userService) UpdateUser(
 		return err
 	}
 
-	cacheErr = s.cacheClient.Create(ctx, resp.User)
+	cacheErr := s.cacheClient.Create(ctx, resp.User)
 	if cacheErr != nil {
 		log.Warnf("Failed to create user in cache, params: %+v, err: %+v", resp, cacheErr)
 	}

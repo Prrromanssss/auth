@@ -2,7 +2,6 @@ package tests
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"testing"
 
@@ -13,6 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/Prrromanssss/auth/internal/cache"
+	cacheMocks "github.com/Prrromanssss/auth/internal/cache/mocks"
+	modelCache "github.com/Prrromanssss/auth/internal/cache/user/model"
 	"github.com/Prrromanssss/auth/internal/model"
 	"github.com/Prrromanssss/auth/internal/repository"
 	repositoryMocks "github.com/Prrromanssss/auth/internal/repository/mocks"
@@ -25,6 +26,7 @@ func TestGet(t *testing.T) {
 
 	type (
 		userRepositoryMockFunc func(mc *minimock.Controller) repository.UserRepository
+		logRepositoryMockFunc  func(mc *minimock.Controller) repository.LogRepository
 		txManagerMockFunc      func(f func(context.Context) error, mc *minimock.Controller) db.TxManager
 		cacheMockFunc          func(mc *minimock.Controller) cache.UserCache
 	)
@@ -45,8 +47,9 @@ func TestGet(t *testing.T) {
 		createdAt = gofakeit.Date()
 		updatedAt = gofakeit.Date()
 
-		ErrRepository    = errors.New("repository error")
-		ErrRepositoryLog = errors.New("repository error in CreateAPILog")
+		ErrUserRepository = errors.New("user repository error")
+		ErrLogRepository  = errors.New("log repository error")
+		ErrCache          = errors.New("cache error")
 
 		req = model.GetUserParams{
 			UserID: id,
@@ -62,25 +65,13 @@ func TestGet(t *testing.T) {
 				UpdatedAt: updatedAt,
 			},
 		}
+
+		logApiReq = model.CreateAPILogParams{
+			Method:       "Get",
+			RequestData:  req,
+			ResponseData: resp,
+		}
 	)
-
-	requestData, err := json.Marshal(req)
-	if err != nil {
-		t.Error(err)
-	}
-
-	responseData, err := json.Marshal(resp)
-	if err != nil {
-		t.Error(err)
-	}
-
-	responseDataString := string(responseData)
-
-	logApiReq := model.CreateAPILogParams{
-		Method:       "Get",
-		RequestData:  string(requestData),
-		ResponseData: &responseDataString,
-	}
 
 	tests := []struct {
 		name               string
@@ -88,10 +79,12 @@ func TestGet(t *testing.T) {
 		want               model.GetUserResponse
 		err                error
 		userRepositoryMock userRepositoryMockFunc
+		logRepositoryMock  logRepositoryMockFunc
+		cacheMock          cacheMockFunc
 		txManagerMock      txManagerMockFunc
 	}{
 		{
-			name: "success case",
+			name: "success case: user retrieved from db, created in cache",
 			args: args{
 				ctx: ctx,
 				req: req,
@@ -101,30 +94,19 @@ func TestGet(t *testing.T) {
 			userRepositoryMock: func(mc *minimock.Controller) repository.UserRepository {
 				mock := repositoryMocks.NewUserRepositoryMock(mc)
 				mock.GetUserMock.Expect(ctx, req).Return(resp, nil)
+
+				return mock
+			},
+			logRepositoryMock: func(mc *minimock.Controller) repository.LogRepository {
+				mock := repositoryMocks.NewLogRepositoryMock(mc)
 				mock.CreateAPILogMock.Expect(ctx, logApiReq).Return(nil)
 
 				return mock
 			},
-			txManagerMock: func(f func(context.Context) error, mc *minimock.Controller) db.TxManager {
-				mock := dbMocks.NewTxManagerMock(mc)
-				mock.ReadCommittedMock.Optional().Set(func(ctx context.Context, f db.Handler) (err error) {
-					return f(ctx)
-				})
-
-				return mock
-			},
-		},
-		{
-			name: "repository error case",
-			args: args{
-				ctx: ctx,
-				req: req,
-			},
-			want: model.GetUserResponse{},
-			err:  ErrRepository,
-			userRepositoryMock: func(mc *minimock.Controller) repository.UserRepository {
-				mock := repositoryMocks.NewUserRepositoryMock(mc)
-				mock.GetUserMock.Expect(ctx, req).Return(model.GetUserResponse{}, ErrRepository)
+			cacheMock: func(mc *minimock.Controller) cache.UserCache {
+				mock := cacheMocks.NewUserCacheMock(mc)
+				mock.GetMock.Expect(ctx, req).Return(model.GetUserResponse{}, modelCache.ErrUserNotFound)
+				mock.CreateMock.Expect(ctx, resp.User).Return(nil)
 
 				return mock
 			},
@@ -138,17 +120,167 @@ func TestGet(t *testing.T) {
 			},
 		},
 		{
-			name: "repository error in CreateAPILog",
+			name: "success case: user retrieved from db, didn't create in cache",
 			args: args{
 				ctx: ctx,
 				req: req,
 			},
-			want: model.GetUserResponse{},
-			err:  ErrRepositoryLog,
+			want: resp,
+			err:  nil,
 			userRepositoryMock: func(mc *minimock.Controller) repository.UserRepository {
 				mock := repositoryMocks.NewUserRepositoryMock(mc)
 				mock.GetUserMock.Expect(ctx, req).Return(resp, nil)
-				mock.CreateAPILogMock.Expect(ctx, logApiReq).Return(ErrRepositoryLog)
+
+				return mock
+			},
+			logRepositoryMock: func(mc *minimock.Controller) repository.LogRepository {
+				mock := repositoryMocks.NewLogRepositoryMock(mc)
+				mock.CreateAPILogMock.Expect(ctx, logApiReq).Return(nil)
+
+				return mock
+			},
+			cacheMock: func(mc *minimock.Controller) cache.UserCache {
+				mock := cacheMocks.NewUserCacheMock(mc)
+				mock.GetMock.Expect(ctx, req).Return(model.GetUserResponse{}, modelCache.ErrUserNotFound)
+				mock.CreateMock.Expect(ctx, resp.User).Return(ErrCache)
+
+				return mock
+			},
+			txManagerMock: func(f func(context.Context) error, mc *minimock.Controller) db.TxManager {
+				mock := dbMocks.NewTxManagerMock(mc)
+				mock.ReadCommittedMock.Optional().Set(func(ctx context.Context, f db.Handler) (err error) {
+					return f(ctx)
+				})
+
+				return mock
+			},
+		},
+		{
+			name: "success case: user retrieved from cache",
+			args: args{
+				ctx: ctx,
+				req: req,
+			},
+			want: resp,
+			err:  nil,
+			userRepositoryMock: func(mc *minimock.Controller) repository.UserRepository {
+				mock := repositoryMocks.NewUserRepositoryMock(mc)
+
+				return mock
+			},
+			logRepositoryMock: func(mc *minimock.Controller) repository.LogRepository {
+				mock := repositoryMocks.NewLogRepositoryMock(mc)
+
+				return mock
+			},
+			cacheMock: func(mc *minimock.Controller) cache.UserCache {
+				mock := cacheMocks.NewUserCacheMock(mc)
+				mock.GetMock.Expect(ctx, req).Return(resp, nil)
+
+				return mock
+			},
+			txManagerMock: func(f func(context.Context) error, mc *minimock.Controller) db.TxManager {
+				mock := dbMocks.NewTxManagerMock(mc)
+				mock.ReadCommittedMock.Optional().Set(func(ctx context.Context, f db.Handler) (err error) {
+					return f(ctx)
+				})
+
+				return mock
+			},
+		},
+		{
+			name: "user repository error",
+			args: args{
+				ctx: ctx,
+				req: req,
+			},
+			want: model.GetUserResponse{},
+			err:  ErrUserRepository,
+			userRepositoryMock: func(mc *minimock.Controller) repository.UserRepository {
+				mock := repositoryMocks.NewUserRepositoryMock(mc)
+				mock.GetUserMock.Expect(ctx, req).Return(resp, ErrUserRepository)
+
+				return mock
+			},
+			logRepositoryMock: func(mc *minimock.Controller) repository.LogRepository {
+				mock := repositoryMocks.NewLogRepositoryMock(mc)
+
+				return mock
+			},
+			cacheMock: func(mc *minimock.Controller) cache.UserCache {
+				mock := cacheMocks.NewUserCacheMock(mc)
+				mock.GetMock.Expect(ctx, req).Return(model.GetUserResponse{}, modelCache.ErrUserNotFound)
+
+				return mock
+			},
+			txManagerMock: func(f func(context.Context) error, mc *minimock.Controller) db.TxManager {
+				mock := dbMocks.NewTxManagerMock(mc)
+				mock.ReadCommittedMock.Optional().Set(func(ctx context.Context, f db.Handler) (err error) {
+					return f(ctx)
+				})
+
+				return mock
+			},
+		},
+		{
+			name: "log repository error",
+			args: args{
+				ctx: ctx,
+				req: req,
+			},
+			want: model.GetUserResponse{},
+			err:  ErrLogRepository,
+			userRepositoryMock: func(mc *minimock.Controller) repository.UserRepository {
+				mock := repositoryMocks.NewUserRepositoryMock(mc)
+				mock.GetUserMock.Expect(ctx, req).Return(resp, nil)
+
+				return mock
+			},
+			logRepositoryMock: func(mc *minimock.Controller) repository.LogRepository {
+				mock := repositoryMocks.NewLogRepositoryMock(mc)
+				mock.CreateAPILogMock.Expect(ctx, logApiReq).Return(ErrLogRepository)
+
+				return mock
+			},
+			cacheMock: func(mc *minimock.Controller) cache.UserCache {
+				mock := cacheMocks.NewUserCacheMock(mc)
+				mock.GetMock.Expect(ctx, req).Return(model.GetUserResponse{}, modelCache.ErrUserNotFound)
+
+				return mock
+			},
+			txManagerMock: func(f func(context.Context) error, mc *minimock.Controller) db.TxManager {
+				mock := dbMocks.NewTxManagerMock(mc)
+				mock.ReadCommittedMock.Optional().Set(func(ctx context.Context, f db.Handler) (err error) {
+					return f(ctx)
+				})
+
+				return mock
+			},
+		},
+		{
+			name: "cache error",
+			args: args{
+				ctx: ctx,
+				req: req,
+			},
+			want: resp,
+			err:  nil,
+			userRepositoryMock: func(mc *minimock.Controller) repository.UserRepository {
+				mock := repositoryMocks.NewUserRepositoryMock(mc)
+				mock.GetUserMock.Expect(ctx, req).Return(resp, nil)
+
+				return mock
+			},
+			logRepositoryMock: func(mc *minimock.Controller) repository.LogRepository {
+				mock := repositoryMocks.NewLogRepositoryMock(mc)
+				mock.CreateAPILogMock.Expect(ctx, logApiReq).Return(nil)
+
+				return mock
+			},
+			cacheMock: func(mc *minimock.Controller) cache.UserCache {
+				mock := cacheMocks.NewUserCacheMock(mc)
+				mock.GetMock.Expect(ctx, req).Return(model.GetUserResponse{}, modelCache.ErrUserNotFound)
+				mock.CreateMock.Expect(ctx, resp.User).Return(ErrCache)
 
 				return mock
 			},
@@ -168,37 +300,27 @@ func TestGet(t *testing.T) {
 			t.Parallel()
 
 			userRepositoryMock := tt.userRepositoryMock(mc)
+			logRepositoryMock := tt.logRepositoryMock(mc)
+			cacheMock := tt.cacheMock(mc)
 			txManagerMock := tt.txManagerMock(func(ctx context.Context) error {
 				resp, txErr := userRepositoryMock.GetUser(ctx, req)
 				if txErr != nil {
 					return txErr
 				}
 
-				requestData, txErr := json.Marshal(req)
-				if txErr != nil {
-					return txErr
-				}
-
-				responseData, txErr := json.Marshal(resp)
-				if txErr != nil {
-					return txErr
-				}
-
-				responseDataString := string(responseData)
-
-				txErr = userRepositoryMock.CreateAPILog(ctx, model.CreateAPILogParams{
+				txErr = logRepositoryMock.CreateAPILog(ctx, model.CreateAPILogParams{
 					Method:       "Create",
-					RequestData:  string(requestData),
-					ResponseData: &responseDataString,
+					RequestData:  req,
+					ResponseData: resp,
 				})
-
 				if txErr != nil {
 					return txErr
 				}
 
 				return nil
 			}, mc)
-			service := userService.NewService(userRepositoryMock, txManagerMock)
+
+			service := userService.NewService(userRepositoryMock, logRepositoryMock, cacheMock, txManagerMock)
 
 			resp, err := service.GetUser(tt.args.ctx, tt.args.req)
 			require.Equal(t, tt.err, err)

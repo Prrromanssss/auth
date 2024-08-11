@@ -2,7 +2,6 @@ package tests
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"testing"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/Prrromanssss/auth/internal/cache"
+	cacheMocks "github.com/Prrromanssss/auth/internal/cache/mocks"
 	"github.com/Prrromanssss/auth/internal/model"
 	"github.com/Prrromanssss/auth/internal/repository"
 	repositoryMocks "github.com/Prrromanssss/auth/internal/repository/mocks"
@@ -26,6 +26,7 @@ func TestCreate(t *testing.T) {
 
 	type (
 		userRepositoryMockFunc func(mc *minimock.Controller) repository.UserRepository
+		logRepositoryMockFunc  func(mc *minimock.Controller) repository.LogRepository
 		txManagerMockFunc      func(f func(context.Context) error, mc *minimock.Controller) db.TxManager
 		cacheMockFunc          func(mc *minimock.Controller) cache.UserCache
 	)
@@ -45,9 +46,12 @@ func TestCreate(t *testing.T) {
 		role           = pb.Role_ADMIN
 		password       = gofakeit.Password(true, true, true, true, true, 10)
 		hashedPassword = crypto.HashPassword(password)
+		createdAt      = gofakeit.Date()
+		updatedAt      = gofakeit.Date()
 
-		ErrRepository    = errors.New("repository error")
-		ErrRepositoryLog = errors.New("repository error in CreateAPILog")
+		ErrUserRepository = errors.New("user repository error")
+		ErrLogRepository  = errors.New("log repository error")
+		ErrCache          = errors.New("cache error")
 
 		req = model.CreateUserParams{
 			Name:           name,
@@ -57,27 +61,31 @@ func TestCreate(t *testing.T) {
 		}
 
 		resp = model.CreateUserResponse{
-			UserID: id,
+			User: model.User{
+				UserID:    id,
+				Name:      name,
+				Email:     email,
+				Role:      int64(role),
+				CreatedAt: createdAt,
+				UpdatedAt: updatedAt,
+			},
+		}
+
+		logApiReq = model.CreateAPILogParams{
+			Method:       "Create",
+			RequestData:  req,
+			ResponseData: resp,
+		}
+
+		cacheUser = model.User{
+			UserID:    id,
+			Name:      name,
+			Email:     email,
+			Role:      int64(role),
+			CreatedAt: createdAt,
+			UpdatedAt: updatedAt,
 		}
 	)
-
-	requestData, err := json.Marshal(req)
-	if err != nil {
-		t.Error(err)
-	}
-
-	responseData, err := json.Marshal(resp)
-	if err != nil {
-		t.Error(err)
-	}
-
-	responseDataString := string(responseData)
-
-	logApiReq := model.CreateAPILogParams{
-		Method:       "Create",
-		RequestData:  string(requestData),
-		ResponseData: &responseDataString,
-	}
 
 	tests := []struct {
 		name               string
@@ -85,6 +93,8 @@ func TestCreate(t *testing.T) {
 		want               model.CreateUserResponse
 		err                error
 		userRepositoryMock userRepositoryMockFunc
+		logRepositoryMock  logRepositoryMockFunc
+		cacheMock          cacheMockFunc
 		txManagerMock      txManagerMockFunc
 	}{
 		{
@@ -98,10 +108,21 @@ func TestCreate(t *testing.T) {
 			userRepositoryMock: func(mc *minimock.Controller) repository.UserRepository {
 				mock := repositoryMocks.NewUserRepositoryMock(mc)
 				mock.CreateUserMock.Expect(ctx, req).Return(resp, nil)
+
+				return mock
+			},
+			logRepositoryMock: func(mc *minimock.Controller) repository.LogRepository {
+				mock := repositoryMocks.NewLogRepositoryMock(mc)
 				mock.CreateAPILogMock.Expect(ctx, logApiReq).Return(nil)
 
 				return mock
 			},
+			cacheMock: func(mc *minimock.Controller) cache.UserCache {
+				mock := cacheMocks.NewUserCacheMock(mc)
+				mock.CreateMock.Expect(ctx, cacheUser).Return(nil)
+
+				return mock
+			},
 			txManagerMock: func(f func(context.Context) error, mc *minimock.Controller) db.TxManager {
 				mock := dbMocks.NewTxManagerMock(mc)
 				mock.ReadCommittedMock.Optional().Set(func(ctx context.Context, f db.Handler) (err error) {
@@ -112,16 +133,26 @@ func TestCreate(t *testing.T) {
 			},
 		},
 		{
-			name: "repository error case",
+			name: "user repository error",
 			args: args{
 				ctx: ctx,
 				req: req,
 			},
 			want: model.CreateUserResponse{},
-			err:  ErrRepository,
+			err:  ErrUserRepository,
 			userRepositoryMock: func(mc *minimock.Controller) repository.UserRepository {
 				mock := repositoryMocks.NewUserRepositoryMock(mc)
-				mock.CreateUserMock.Expect(ctx, req).Return(model.CreateUserResponse{}, ErrRepository)
+				mock.CreateUserMock.Expect(ctx, req).Return(resp, ErrUserRepository)
+
+				return mock
+			},
+			logRepositoryMock: func(mc *minimock.Controller) repository.LogRepository {
+				mock := repositoryMocks.NewLogRepositoryMock(mc)
+
+				return mock
+			},
+			cacheMock: func(mc *minimock.Controller) cache.UserCache {
+				mock := cacheMocks.NewUserCacheMock(mc)
 
 				return mock
 			},
@@ -135,17 +166,62 @@ func TestCreate(t *testing.T) {
 			},
 		},
 		{
-			name: "repository error in CreateAPILog",
+			name: "log repository error",
 			args: args{
 				ctx: ctx,
 				req: req,
 			},
 			want: model.CreateUserResponse{},
-			err:  ErrRepositoryLog,
+			err:  ErrLogRepository,
 			userRepositoryMock: func(mc *minimock.Controller) repository.UserRepository {
 				mock := repositoryMocks.NewUserRepositoryMock(mc)
 				mock.CreateUserMock.Expect(ctx, req).Return(resp, nil)
-				mock.CreateAPILogMock.Expect(ctx, logApiReq).Return(ErrRepositoryLog)
+
+				return mock
+			},
+			logRepositoryMock: func(mc *minimock.Controller) repository.LogRepository {
+				mock := repositoryMocks.NewLogRepositoryMock(mc)
+				mock.CreateAPILogMock.Expect(ctx, logApiReq).Return(ErrLogRepository)
+
+				return mock
+			},
+			cacheMock: func(mc *minimock.Controller) cache.UserCache {
+				mock := cacheMocks.NewUserCacheMock(mc)
+
+				return mock
+			},
+			txManagerMock: func(f func(context.Context) error, mc *minimock.Controller) db.TxManager {
+				mock := dbMocks.NewTxManagerMock(mc)
+				mock.ReadCommittedMock.Optional().Set(func(ctx context.Context, f db.Handler) (err error) {
+					return f(ctx)
+				})
+
+				return mock
+			},
+		},
+		{
+			name: "cache error",
+			args: args{
+				ctx: ctx,
+				req: req,
+			},
+			want: resp,
+			err:  nil,
+			userRepositoryMock: func(mc *minimock.Controller) repository.UserRepository {
+				mock := repositoryMocks.NewUserRepositoryMock(mc)
+				mock.CreateUserMock.Expect(ctx, req).Return(resp, nil)
+
+				return mock
+			},
+			logRepositoryMock: func(mc *minimock.Controller) repository.LogRepository {
+				mock := repositoryMocks.NewLogRepositoryMock(mc)
+				mock.CreateAPILogMock.Expect(ctx, logApiReq).Return(nil)
+
+				return mock
+			},
+			cacheMock: func(mc *minimock.Controller) cache.UserCache {
+				mock := cacheMocks.NewUserCacheMock(mc)
+				mock.CreateMock.Expect(ctx, cacheUser).Return(ErrCache)
 
 				return mock
 			},
@@ -165,37 +241,27 @@ func TestCreate(t *testing.T) {
 			t.Parallel()
 
 			userRepositoryMock := tt.userRepositoryMock(mc)
+			logRepositoryMock := tt.logRepositoryMock(mc)
+			cacheMock := tt.cacheMock(mc)
 			txManagerMock := tt.txManagerMock(func(ctx context.Context) error {
 				resp, txErr := userRepositoryMock.CreateUser(ctx, req)
 				if txErr != nil {
 					return txErr
 				}
 
-				requestData, txErr := json.Marshal(req)
-				if txErr != nil {
-					return txErr
-				}
-
-				responseData, txErr := json.Marshal(resp)
-				if txErr != nil {
-					return txErr
-				}
-
-				responseDataString := string(responseData)
-
-				txErr = userRepositoryMock.CreateAPILog(ctx, model.CreateAPILogParams{
+				txErr = logRepositoryMock.CreateAPILog(ctx, model.CreateAPILogParams{
 					Method:       "Create",
-					RequestData:  string(requestData),
-					ResponseData: &responseDataString,
+					RequestData:  req,
+					ResponseData: resp,
 				})
-
 				if txErr != nil {
 					return txErr
 				}
 
 				return nil
 			}, mc)
-			service := userService.NewService(userRepositoryMock, txManagerMock)
+
+			service := userService.NewService(userRepositoryMock, logRepositoryMock, cacheMock, txManagerMock)
 
 			resp, err := service.CreateUser(tt.args.ctx, tt.args.req)
 			require.Equal(t, tt.err, err)
