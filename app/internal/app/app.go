@@ -3,12 +3,15 @@ package app
 import (
 	"context"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/Prrromanssss/platform_common/pkg/closer"
 	"github.com/gofiber/fiber/v2/log"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -22,6 +25,7 @@ type App struct {
 	cfg             *config.Config
 	serviceProvider *serviceProvider
 	grpcServer      *grpc.Server
+	httpServer      *http.Server
 }
 
 // NewApp creates a new instance of App.
@@ -36,11 +40,66 @@ func NewApp(ctx context.Context) (*App, error) {
 	return a, nil
 }
 
+// Run runs the App.
+func (a *App) Run(ctx context.Context, cancel context.CancelFunc) error {
+	defer func() {
+		closer.CloseAll()
+		closer.Wait()
+	}()
+
+	wg := sync.WaitGroup{}
+
+	wg.Add(2)
+
+	// Starting gRPC server.
+	go func() {
+		defer wg.Done()
+
+		err := a.runGRPCServer()
+		if err != nil {
+			log.Panic(err)
+		}
+	}()
+
+	// Starting HTTP server.
+	go func() {
+		defer wg.Done()
+
+		err := a.runHTTPServer()
+		if err != nil {
+			log.Panic(err)
+		}
+	}()
+
+	// Handle graceful shutdown.
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+
+	select {
+	case <-ctx.Done():
+		log.Info("Context cancelled, initiating graceful shutdown...")
+		a.grpcServer.GracefulStop()
+		a.httpServer.Shutdown(ctx)
+	case <-quit:
+		log.Info("Received termination signal, initiating graceful shutdown...")
+		a.grpcServer.GracefulStop()
+		a.httpServer.Shutdown(ctx)
+	}
+
+	log.Info("App shut down gracefully")
+	cancel()
+
+	wg.Wait()
+
+	return nil
+}
+
 func (a *App) initDeps(ctx context.Context) error {
 	inits := []func(ctx context.Context) error{
 		a.initConfig,
 		a.initServiceProvider,
 		a.initGRPCServer,
+		a.initHTTPServer,
 	}
 
 	for _, f := range inits {
@@ -82,36 +141,22 @@ func (a *App) initGRPCServer(ctx context.Context) error {
 	return nil
 }
 
-// Run runs the App.
-func (a *App) Run(ctx context.Context, cancel context.CancelFunc) error {
-	defer func() {
-		closer.CloseAll()
-		closer.Wait()
-	}()
+func (a *App) initHTTPServer(ctx context.Context) error {
+	mux := runtime.NewServeMux()
 
-	// Starting gRPC server
-	go func() {
-		err := a.runGRPCServer()
-		if err != nil {
-			log.Panic(err)
-		}
-	}()
-
-	// Handle graceful shutdown
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
-
-	select {
-	case <-ctx.Done():
-		log.Info("Context cancelled, initiating graceful shutdown...")
-		a.grpcServer.GracefulStop()
-	case <-quit:
-		log.Info("Received termination signal, initiating graceful shutdown...")
-		a.grpcServer.GracefulStop()
+	opts := []grpc.DialOption{
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
 
-	log.Info("gRPC server shut down gracefully")
-	cancel()
+	err := pb.RegisterUserV1HandlerFromEndpoint(ctx, mux, a.cfg.GRPC.Address(), opts)
+	if err != nil {
+		return err
+	}
+
+	a.httpServer = &http.Server{
+		Addr:    a.cfg.HTTP.Address(),
+		Handler: mux,
+	}
 
 	return nil
 }
@@ -129,6 +174,17 @@ func (a *App) runGRPCServer() error {
 
 	if err := a.grpcServer.Serve(listener); err != nil {
 		return errors.Wrapf(err, "Error starting gRPC server")
+	}
+
+	return nil
+}
+
+func (a *App) runHTTPServer() error {
+	log.Infof("Starting HTTP server on %s", a.cfg.HTTP.Address())
+
+	err := a.httpServer.ListenAndServe()
+	if err != nil {
+		return err
 	}
 
 	return nil

@@ -14,3 +14,6 @@ redis:
   connection_timeout: "5s"
   max_idle: 10
   idle_timeout: "300s"
+http:
+  host: "127.0.0.1"
+  port: "8080"

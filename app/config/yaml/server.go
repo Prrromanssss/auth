@@ -1,6 +1,6 @@
 package yaml
 
-import "fmt"
+import "net"
 
 // Server holds the configuration for the gRPC/HTTP server.
 type Server struct {
@@ -10,5 +10,5 @@ type Server struct {
 
 // Address returns the server address.
 func (s Server) Address() string {
-	return fmt.Sprintf("%s:%s", s.Host, s.Port)
+	return net.JoinHostPort(s.Host, s.Port)
 }

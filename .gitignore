@@ -22,6 +22,9 @@ bin/
 # Go workspace file
 go.work
 go.work.sum
-.vscode
 
+# Local development file
+.vscode
 .docker-compose.yaml
+/coverage.out
+*/vendor.protogen
