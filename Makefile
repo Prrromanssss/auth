@@ -56,3 +56,9 @@ vendor-proto:
 	mv app/vendor.protogen/googleapis/google/api app/vendor.protogen/google &&\
 	rm -rf app/vendor.protogen/googleapis ;\
 	fi
+
+run-local:
+	docker-compose -f .docker-compose.yaml up --build -d
+
+down-local:
+	docker-compose -f .docker-compose.yaml down
