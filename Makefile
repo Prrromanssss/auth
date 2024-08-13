@@ -11,6 +11,7 @@ install-deps:
 	GOBIN=$(LOCAL_BIN) go install -mod=mod google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
 	GOBIN=$(LOCAL_BIN) go install github.com/pressly/goose/v3/cmd/goose@v3.14.0
 	GOBIN=$(LOCAL_BIN) go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.20.0
+	GOBIN=$(LOCAL_BIN) go install github.com/envoyproxy/protoc-gen-validate@v1.0.4
 
 generate:
 	make generate-user-api
@@ -28,6 +29,9 @@ generate-user-api:
 	--grpc-gateway_out=app/pkg/user_v1 \
 	--grpc-gateway_opt=paths=source_relative \
 	--plugin=protoc-gen-grpc-gateway=app/bin/protoc-gen-grpc-gateway \
+	--validate_out lang=go:app/pkg/user_v1 \
+	--validate_opt=paths=source_relative \
+	--plugin=protoc-gen-validate=app/bin/protoc-gen-validate \
 	app/api/user_v1/user.proto
 
 local-migration-status:
@@ -47,7 +51,7 @@ test-coverage:
 	rm coverage.tmp.out
 	cd app && go tool cover -html=coverage.out;
 	cd app &&go tool cover -func=./coverage.out | grep "total";
-	cd app && grep -sqFx "/coverage.out" .gitignore || echo "/coverage.out" >> .gitignore
+	grep -sqFx "/coverage.out" .gitignore || echo "/coverage.out" >> .gitignore
 
 vendor-proto:
 	@if [ ! -d app/vendor.protogen/google ]; then \
@@ -55,6 +59,12 @@ vendor-proto:
 	mkdir -p  app/vendor.protogen/google/ &&\
 	mv app/vendor.protogen/googleapis/google/api app/vendor.protogen/google &&\
 	rm -rf app/vendor.protogen/googleapis ;\
+	fi
+	@if [ ! -d app/vendor.protogen/validate ]; then \
+		mkdir -p app/vendor.protogen/validate &&\
+		git clone https://github.com/envoyproxy/protoc-gen-validate app/vendor.protogen/protoc-gen-validate &&\
+		mv app/vendor.protogen/protoc-gen-validate/validate/*.proto app/vendor.protogen/validate &&\
+		rm -rf app/vendor.protogen/protoc-gen-validate ;\
 	fi
 
 run-local:
