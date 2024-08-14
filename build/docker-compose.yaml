@@ -12,6 +12,7 @@ services:
     ports:
       - "${AUTH_GRPC_OUTER_PORT}:50052"
       - "${AUTH_HTTP_OUTER_PORT}:8080"
+      - "${AUTH_SWAGGER_OUTER_PORT}:8090"
     environment:
       - CONFIG_PATH=/config.yaml
 

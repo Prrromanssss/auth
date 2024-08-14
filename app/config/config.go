@@ -16,6 +16,7 @@ type Config struct {
 	Postgres yaml.Postgres `validate:"required" yaml:"postgres"`
 	Redis    yaml.Redis    `validate:"required" yaml:"redis"`
 	HTTP     yaml.Server   `validate:"required" yaml:"http"`
+	Swagger  yaml.Server   `validate:"required" yaml:"swagger"`
 }
 
 // LoadConfig reads and parses the configuration from a file specified by the CONFIG_PATH environment variable.
