@@ -18,7 +18,7 @@ install-deps:
 generate:
 	mkdir -p app/pkg/swagger
 	make generate-user-api
-	$(LOCAL_BIN)/statik -src=app/pkg/swagger/ -include='*.css,*.html,*.js,*.json,*.png'
+	$(LOCAL_BIN)/statik -src=app/pkg/swagger/ -include='*.css,*.html,*.js,*.json,*.png' -f -dest=app
 
 generate-user-api:
 	mkdir -p app/pkg/user_v1

@@ -23,6 +23,7 @@ import (
 	"github.com/Prrromanssss/auth/config"
 	"github.com/Prrromanssss/auth/internal/interceptor"
 	pb "github.com/Prrromanssss/auth/pkg/user_v1"
+	_ "github.com/Prrromanssss/auth/statik"
 )
 
 type App struct {
