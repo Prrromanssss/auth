@@ -5,6 +5,7 @@ go 1.22.4
 require (
 	github.com/Prrromanssss/platform_common v0.0.5
 	github.com/brianvoe/gofakeit/v6 v6.28.0
+	github.com/envoyproxy/protoc-gen-validate v1.0.4
 	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/gojuno/minimock/v3 v3.3.14
 	github.com/gomodule/redigo v1.9.2
