@@ -28,3 +28,11 @@ go.work.sum
 .docker-compose.yaml
 /coverage.out
 */vendor.protogen
+
+app/pkg/swagger/*.js
+app/pkg/swagger/*.js.map
+app/pkg/swagger/*.css
+app/pkg/swagger/*.css.map
+app/pkg/swagger/*.png
+app/pkg/swagger/*.html
+# swagger

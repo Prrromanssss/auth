@@ -13,9 +13,12 @@ install-deps:
 	GOBIN=$(LOCAL_BIN) go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.20.0
 	GOBIN=$(LOCAL_BIN) go install github.com/envoyproxy/protoc-gen-validate@v1.0.4
 	GOBIN=$(LOCAL_BIN) go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.20.0
+	GOBIN=$(LOCAL_BIN) go install github.com/rakyll/statik@v0.1.7
 
 generate:
+	mkdir -p app/pkg/swagger
 	make generate-user-api
+	$(LOCAL_BIN)/statik -src=app/pkg/swagger/ -include='*.css,*.html,*.js,*.json,*.png'
 
 generate-user-api:
 	mkdir -p app/pkg/user_v1
@@ -33,6 +36,8 @@ generate-user-api:
 	--validate_out lang=go:app/pkg/user_v1 \
 	--validate_opt=paths=source_relative \
 	--plugin=protoc-gen-validate=app/bin/protoc-gen-validate \
+	--openapiv2_out=allow_merge=true,merge_file_name=api:app/pkg/swagger \
+	--plugin=protoc-gen-openapiv2=app/bin/protoc-gen-openapiv2 \
 	app/api/user_v1/user.proto
 
 local-migration-status:
@@ -56,16 +61,22 @@ test-coverage:
 
 vendor-proto:
 	@if [ ! -d app/vendor.protogen/google ]; then \
-	git clone https://github.com/googleapis/googleapis app/vendor.protogen/googleapis &&\
-	mkdir -p  app/vendor.protogen/google/ &&\
-	mv app/vendor.protogen/googleapis/google/api app/vendor.protogen/google &&\
-	rm -rf app/vendor.protogen/googleapis ;\
+		git clone https://github.com/googleapis/googleapis app/vendor.protogen/googleapis &&\
+		mkdir -p  app/vendor.protogen/google/ &&\
+		mv app/vendor.protogen/googleapis/google/api app/vendor.protogen/google &&\
+		rm -rf app/vendor.protogen/googleapis ;\
 	fi
 	@if [ ! -d app/vendor.protogen/validate ]; then \
 		mkdir -p app/vendor.protogen/validate &&\
 		git clone https://github.com/envoyproxy/protoc-gen-validate app/vendor.protogen/protoc-gen-validate &&\
 		mv app/vendor.protogen/protoc-gen-validate/validate/*.proto app/vendor.protogen/validate &&\
 		rm -rf app/vendor.protogen/protoc-gen-validate ;\
+	fi
+	@if [ ! -d app/vendor.protogen/protoc-gen-openapiv2 ]; then \
+		mkdir -p app/vendor.protogen/protoc-gen-openapiv2/options &&\
+		git clone https://github.com/grpc-ecosystem/grpc-gateway app/vendor.protogen/openapiv2 &&\
+		mv app/vendor.protogen/openapiv2/protoc-gen-openapiv2/options/*.proto app/vendor.protogen/protoc-gen-openapiv2/options &&\
+		rm -rf app/vendor.protogen/openapiv2 ;\
 	fi
 
 run-local:
