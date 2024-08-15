@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/Prrromanssss/platform_common/pkg/closer"
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -14,7 +15,6 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	"github.com/Prrromanssss/auth/config"
-	"github.com/Prrromanssss/auth/pkg/closer"
 	pb "github.com/Prrromanssss/auth/pkg/user_v1"
 )
 
@@ -24,6 +24,7 @@ type App struct {
 	grpcServer      *grpc.Server
 }
 
+// NewApp creates a new instance of App.
 func NewApp(ctx context.Context) (*App, error) {
 	a := &App{}
 
@@ -81,6 +82,7 @@ func (a *App) initGRPCServer(ctx context.Context) error {
 	return nil
 }
 
+// Run runs the App.
 func (a *App) Run(ctx context.Context, cancel context.CancelFunc) error {
 	defer func() {
 		closer.CloseAll()

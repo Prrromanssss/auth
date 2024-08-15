@@ -3,10 +3,10 @@ package user
 import (
 	"context"
 
+	"github.com/Prrromanssss/platform_common/pkg/db"
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/pkg/errors"
 
-	"github.com/Prrromanssss/auth/internal/client/db"
 	"github.com/Prrromanssss/auth/internal/model"
 	"github.com/Prrromanssss/auth/internal/repository"
 	"github.com/Prrromanssss/auth/internal/repository/user/converter"
@@ -42,7 +42,7 @@ func (p *userPGRepo) CreateUser(
 	if err != nil {
 		return resp, errors.Wrapf(
 			err,
-			"userPGRepo.CreateUser.DB.ScanOneContext.queryCreateUser(email: %s)",
+			"Cannot create user(email: %s)",
 			paramsRepo.Email,
 		)
 	}
@@ -70,7 +70,7 @@ func (p *userPGRepo) GetUser(
 	if err != nil {
 		return resp, errors.Wrapf(
 			err,
-			"userPGRepo.GetUser.DB.ScanOneContext.queryGetUser(userID: %d)",
+			"Cannot get user(userID: %d)",
 			paramsRepo.UserID,
 		)
 	}
@@ -82,7 +82,7 @@ func (p *userPGRepo) GetUser(
 func (p *userPGRepo) UpdateUser(
 	ctx context.Context,
 	params model.UpdateUserParams,
-) (err error) {
+) (resp model.UpdateUserResponse, err error) {
 	log.Infof("userPGRepo.UpdateUser, params: %+v", params)
 
 	paramsRepo := converter.ConvertUpdateUserParamsFromServiceToRepo(params)
@@ -92,16 +92,18 @@ func (p *userPGRepo) UpdateUser(
 		QueryRaw: queryUpdateUser,
 	}
 
-	_, err = p.db.DB().ExecContext(ctx, q, paramsRepo.UserID, paramsRepo.Name, paramsRepo.Role)
+	var respRepo modelRepo.UpdateUserResponse
+
+	err = p.db.DB().ScanOneContext(ctx, &respRepo, q, paramsRepo.UserID, paramsRepo.Name, paramsRepo.Role)
 	if err != nil {
-		return errors.Wrapf(
+		return resp, errors.Wrapf(
 			err,
-			"userPGRepo.UpdateUser.DB.ExecContext.queryUpdateUser(userID: %d)",
+			"Cannot update user(userID: %d)",
 			paramsRepo.UserID,
 		)
 	}
 
-	return nil
+	return converter.ConvertUpdateUserResponseFromRepoToService(respRepo), nil
 }
 
 // DeleteUser removes a user from the database by their ID.
@@ -122,33 +124,8 @@ func (p *userPGRepo) DeleteUser(
 	if err != nil {
 		return errors.Wrapf(
 			err,
-			"userPGRepo.DeleteUser.DB.ExecContext.queryDeleteUser(userID: %d)",
+			"Cannot delete user(userID: %d)",
 			paramsRepo.UserID,
-		)
-	}
-
-	return nil
-}
-
-// CreateAPILog creates log in database of every api action.
-func (p *userPGRepo) CreateAPILog(
-	ctx context.Context,
-	params model.CreateAPILogParams,
-) (err error) {
-	log.Infof("userPGRepo.CreateAPILog, params: %+v", params)
-
-	paramsRepo := converter.ConvertCreateAPILogParamsFromServiceToRepo(params)
-
-	q := db.Query{
-		Name:     "userPGRepo.CreateAPILog",
-		QueryRaw: queryCreateAPILog,
-	}
-
-	_, err = p.db.DB().ExecContext(ctx, q, paramsRepo.Method, paramsRepo.RequestData, paramsRepo.ResponseData)
-	if err != nil {
-		return errors.Wrapf(
-			err,
-			"userPGRepo.CreateAPILog.DB.ExecContext.queryCreateAPILog",
 		)
 	}
 

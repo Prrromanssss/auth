@@ -1,8 +1,7 @@
 version: '3.9'
 
 volumes:
-  postgres_volume_local:
-  postgres_volume_prod:
+  postgres_volume:
 
 services:
   auth:
@@ -22,10 +21,17 @@ services:
     ports:
       - "${POSTGRES_OUTER_PORT}:5432"
     volumes:
-      - postgres_volume_local:/var/lib/postgresql/data
+      - postgres_volume:/var/lib/postgresql/data
 
   auth-migrator:
     image: cr.selcloud.ru/slimshady/auth-migrator:${AUTH_MIGRATOR_TAG_NAME}
     restart: on-failure
     environment:
       DB_HOST: auth-pg
+  
+  auth-redis:
+    image: redis:7.2.5-alpine3.20
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
