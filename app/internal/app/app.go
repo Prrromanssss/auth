@@ -53,7 +53,7 @@ func (a *App) Run(ctx context.Context, cancel context.CancelFunc) error {
 		closer.Wait()
 	}()
 
-	wg := sync.WaitGroup{}
+	wg := &sync.WaitGroup{}
 
 	wg.Add(4)
 
@@ -98,24 +98,7 @@ func (a *App) Run(ctx context.Context, cancel context.CancelFunc) error {
 	}()
 
 	// Handle graceful shutdown.
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
-
-	select {
-	case <-ctx.Done():
-		log.Info("Context cancelled, initiating graceful shutdown...")
-		a.grpcServer.GracefulStop()
-		a.httpServer.Shutdown(ctx)
-	case <-quit:
-		log.Info("Received termination signal, initiating graceful shutdown...")
-		a.grpcServer.GracefulStop()
-		a.httpServer.Shutdown(ctx)
-	}
-
-	log.Info("App shut down gracefully")
-	cancel()
-
-	wg.Wait()
+	a.gracefulShutdown(ctx, cancel, wg)
 
 	return nil
 }
@@ -295,4 +278,30 @@ func serveSwaggerFile(path string) http.HandlerFunc {
 
 		log.Infof("Served swagger file: %s", path)
 	}
+}
+
+func (a *App) gracefulShutdown(ctx context.Context, cancel context.CancelFunc, wg *sync.WaitGroup) {
+	select {
+	case <-ctx.Done():
+		log.Info("terminating: context cancelled")
+	case <-waitSignal():
+		log.Info("terminating: via signal")
+	}
+
+	a.grpcServer.GracefulStop()
+	err := a.httpServer.Shutdown(ctx)
+	if err != nil {
+		log.Panicf("cannot shutdown http server: %+v", err)
+	}
+
+	cancel()
+	if wg != nil {
+		wg.Wait()
+	}
+}
+
+func waitSignal() chan os.Signal {
+	sigterm := make(chan os.Signal, 1)
+	signal.Notify(sigterm, syscall.SIGINT, syscall.SIGTERM)
+	return sigterm
 }
