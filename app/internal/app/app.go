@@ -257,7 +257,12 @@ func serveSwaggerFile(path string) http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer file.Close()
+		defer func() {
+			err = file.Close()
+			if err != nil {
+				log.Warnf("Cannot close file: %+v", err)
+			}
+		}()
 
 		log.Infof("Read swagger file: %s", path)
 
