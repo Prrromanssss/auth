@@ -55,7 +55,7 @@ func (a *App) Run(ctx context.Context, cancel context.CancelFunc) error {
 
 	wg := sync.WaitGroup{}
 
-	wg.Add(3)
+	wg.Add(4)
 
 	// Starting gRPC server.
 	go func() {
@@ -84,6 +84,16 @@ func (a *App) Run(ctx context.Context, cancel context.CancelFunc) error {
 		err := a.runSwaggerServer()
 		if err != nil {
 			log.Panic(err)
+		}
+	}()
+
+	// Starting Kafka consumer.
+	go func() {
+		defer wg.Done()
+
+		err := a.serviceProvider.UserSaverConsumer(ctx).RunConsumer(ctx)
+		if err != nil {
+			log.Panicf("failed to run consumer: %s", err.Error())
 		}
 	}()
 

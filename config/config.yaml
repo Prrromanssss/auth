@@ -20,3 +20,7 @@ http:
 swagger:
   host: "0.0.0.0"
   port: "8090"
+kafka_consumer:
+  user_creation_topic_name: "User-Creation"
+  brokers: "localhost:9092, localhost:9093, localhost:9094"
+  group_id: "User"
