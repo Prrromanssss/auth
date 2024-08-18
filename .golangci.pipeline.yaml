@@ -41,10 +41,6 @@ linters:
     - typecheck
     - unused
 
-gosec:
-  ignore:
-    - G112
-
 issues:
   exclude-use-default: false
   exclude:

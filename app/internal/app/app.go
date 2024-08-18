@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/Prrromanssss/platform_common/pkg/closer"
 	"github.com/gofiber/fiber/v2/log"
@@ -174,8 +175,9 @@ func (a *App) initHTTPServer(ctx context.Context) error {
 	})
 
 	a.httpServer = &http.Server{
-		Addr:    a.cfg.HTTP.Address(),
-		Handler: corsMiddleware.Handler(mux),
+		ReadHeaderTimeout: 10 * time.Second,
+		Addr:              a.cfg.HTTP.Address(),
+		Handler:           corsMiddleware.Handler(mux),
 	}
 
 	return nil
@@ -193,8 +195,9 @@ func (a *App) initSwaggerServer(ctx context.Context) error {
 	mux.HandleFunc("/api.swagger.json", serveSwaggerFile("/api.swagger.json"))
 
 	a.swaggerServer = &http.Server{
-		Addr:    a.cfg.Swagger.Address(),
-		Handler: mux,
+		ReadHeaderTimeout: 10 * time.Second,
+		Addr:              a.cfg.Swagger.Address(),
+		Handler:           mux,
 	}
 
 	return nil
