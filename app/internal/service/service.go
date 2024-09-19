@@ -20,3 +20,7 @@ type UserService interface {
 	// DeleteUser removes a user by ID and returns any error.
 	DeleteUser(ctx context.Context, params model.DeleteUserParams) (err error)
 }
+
+type ConsumerService interface {
+	RunConsumer(ctx context.Context) error
+}

@@ -4,12 +4,15 @@ import (
 	"context"
 	"log"
 
+	"github.com/IBM/sarama"
 	redisCache "github.com/Prrromanssss/platform_common/pkg/cache"
 	"github.com/Prrromanssss/platform_common/pkg/cache/redis"
 	"github.com/Prrromanssss/platform_common/pkg/closer"
 	"github.com/Prrromanssss/platform_common/pkg/db"
 	"github.com/Prrromanssss/platform_common/pkg/db/pg"
 	"github.com/Prrromanssss/platform_common/pkg/db/transaction"
+	"github.com/Prrromanssss/platform_common/pkg/kafka"
+	kafkaConsumer "github.com/Prrromanssss/platform_common/pkg/kafka/consumer"
 	redigo "github.com/gomodule/redigo/redis"
 
 	"github.com/Prrromanssss/auth/config"
@@ -20,6 +23,7 @@ import (
 	logRepository "github.com/Prrromanssss/auth/internal/repository/log"
 	userRepository "github.com/Prrromanssss/auth/internal/repository/user"
 	"github.com/Prrromanssss/auth/internal/service"
+	userSaverConsumer "github.com/Prrromanssss/auth/internal/service/consumer/user_saver"
 	userService "github.com/Prrromanssss/auth/internal/service/user"
 )
 
@@ -38,6 +42,12 @@ type serviceProvider struct {
 	userCache   cache.UserCache
 	userService service.UserService
 	userAPI     *userAPI.GRPCHandlers
+
+	userSaverConsumer service.ConsumerService
+
+	consumer             kafka.Consumer
+	consumerGroup        sarama.ConsumerGroup
+	consumerGroupHandler *kafkaConsumer.GroupHandler
 }
 
 func newServiceProvider(cfg *config.Config) *serviceProvider {
@@ -146,4 +156,53 @@ func (s *serviceProvider) TxManager(ctx context.Context) db.TxManager {
 	}
 
 	return s.txManager
+}
+
+func (s *serviceProvider) UserSaverConsumer(ctx context.Context) service.ConsumerService {
+	if s.userSaverConsumer == nil {
+		s.userSaverConsumer = userSaverConsumer.NewService(
+			s.cfg,
+			s.UserRepository(ctx),
+			s.Consumer(),
+		)
+	}
+
+	return s.userSaverConsumer
+}
+
+func (s *serviceProvider) Consumer() kafka.Consumer {
+	if s.consumer == nil {
+		s.consumer = kafkaConsumer.NewConsumer(
+			s.ConsumerGroup(),
+			s.ConsumerGroupHandler(),
+		)
+		closer.Add(s.consumer.Close)
+	}
+
+	return s.consumer
+}
+
+func (s *serviceProvider) ConsumerGroup() sarama.ConsumerGroup {
+	if s.consumerGroup == nil {
+		consumerGroup, err := sarama.NewConsumerGroup(
+			s.cfg.KafkaConsumer.BrokersList(),
+			s.cfg.KafkaConsumer.GroupID,
+			s.cfg.KafkaConsumer.Config(),
+		)
+		if err != nil {
+			log.Fatalf("failed to create consumer group: %v", err)
+		}
+
+		s.consumerGroup = consumerGroup
+	}
+
+	return s.consumerGroup
+}
+
+func (s *serviceProvider) ConsumerGroupHandler() *kafkaConsumer.GroupHandler {
+	if s.consumerGroupHandler == nil {
+		s.consumerGroupHandler = kafkaConsumer.NewGroupHandler()
+	}
+
+	return s.consumerGroupHandler
 }

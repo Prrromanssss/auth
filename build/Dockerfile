@@ -12,6 +12,6 @@ WORKDIR /root/
 
 COPY --from=builder /github.com/Prrromanssss/auth/source/bin/auth .
 
-ADD config.yaml /config.yaml
+ADD config/config.yaml /config.yaml
 
 CMD ["./auth"]

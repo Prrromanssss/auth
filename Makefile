@@ -10,31 +10,44 @@ install-deps:
 	GOBIN=$(LOCAL_BIN) go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28.1
 	GOBIN=$(LOCAL_BIN) go install -mod=mod google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
 	GOBIN=$(LOCAL_BIN) go install github.com/pressly/goose/v3/cmd/goose@v3.14.0
-
-get-deps:
-	go get -u google.golang.org/protobuf/cmd/protoc-gen-go
-	go get -u google.golang.org/grpc/cmd/protoc-gen-go-grpc
+	GOBIN=$(LOCAL_BIN) go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.20.0
+	GOBIN=$(LOCAL_BIN) go install github.com/envoyproxy/protoc-gen-validate@v1.0.4
+	GOBIN=$(LOCAL_BIN) go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.20.0
+	GOBIN=$(LOCAL_BIN) go install github.com/rakyll/statik@v0.1.7
 
 generate:
+	mkdir -p app/pkg/swagger
 	make generate-user-api
+	$(LOCAL_BIN)/statik -src=app/pkg/swagger/ -include='*.css,*.html,*.js,*.json,*.png' -f -dest=app
 
 generate-user-api:
 	mkdir -p app/pkg/user_v1
 	protoc --proto_path app/api/user_v1 \
-	--go_out=app/pkg/user_v1 --go_opt=paths=source_relative \
+	--proto_path app/vendor.protogen  \
+	--go_out=app/pkg/user_v1 \
+	--go_opt=paths=source_relative \
 	--plugin=protoc-gen-go=app/bin/protoc-gen-go \
-	--go-grpc_out=app/pkg/user_v1 --go-grpc_opt=paths=source_relative \
+	--go-grpc_out=app/pkg/user_v1 \
+	--go-grpc_opt=paths=source_relative \
 	--plugin=protoc-gen-go-grpc=app/bin/protoc-gen-go-grpc \
+	--grpc-gateway_out=app/pkg/user_v1 \
+	--grpc-gateway_opt=paths=source_relative \
+	--plugin=protoc-gen-grpc-gateway=app/bin/protoc-gen-grpc-gateway \
+	--validate_out lang=go:app/pkg/user_v1 \
+	--validate_opt=paths=source_relative \
+	--plugin=protoc-gen-validate=app/bin/protoc-gen-validate \
+	--openapiv2_out=allow_merge=true,merge_file_name=api:app/pkg/swagger \
+	--plugin=protoc-gen-openapiv2=app/bin/protoc-gen-openapiv2 \
 	app/api/user_v1/user.proto
 
 local-migration-status:
-	${LOCAL_BIN}/goose -dir ${LOCAL_MIGRATION_DIR} postgres ${LOCAL_MIGRATION_DSN} status -v
+	${LOCAL_BIN}/goose -dir ${MIGRATION_DIR} postgres ${MIGRATION_DIR} status -v
 
 local-migration-up:
-	${LOCAL_BIN}/goose -dir ${LOCAL_MIGRATION_DIR} postgres ${LOCAL_MIGRATION_DSN} up -v
+	${LOCAL_BIN}/goose -dir ${MIGRATION_DIR} postgres ${MIGRATION_DIR} up -v
 
 local-migration-down:
-	${LOCAL_BIN}/goose -dir ${LOCAL_MIGRATION_DIR} postgres ${LOCAL_MIGRATION_DSN} down -v
+	${LOCAL_BIN}/goose -dir ${MIGRATION_DIR} postgres ${MIGRATION_DIR} down -v
 
 test-coverage:
 	@cd app && \
@@ -44,4 +57,30 @@ test-coverage:
 	rm coverage.tmp.out
 	cd app && go tool cover -html=coverage.out;
 	cd app &&go tool cover -func=./coverage.out | grep "total";
-	cd app && grep -sqFx "/coverage.out" .gitignore || echo "/coverage.out" >> .gitignore
+	grep -sqFx "/coverage.out" .gitignore || echo "/coverage.out" >> .gitignore
+
+vendor-proto:
+	@if [ ! -d app/vendor.protogen/google ]; then \
+		git clone https://github.com/googleapis/googleapis app/vendor.protogen/googleapis &&\
+		mkdir -p  app/vendor.protogen/google/ &&\
+		mv app/vendor.protogen/googleapis/google/api app/vendor.protogen/google &&\
+		rm -rf app/vendor.protogen/googleapis ;\
+	fi
+	@if [ ! -d app/vendor.protogen/validate ]; then \
+		mkdir -p app/vendor.protogen/validate &&\
+		git clone https://github.com/envoyproxy/protoc-gen-validate app/vendor.protogen/protoc-gen-validate &&\
+		mv app/vendor.protogen/protoc-gen-validate/validate/*.proto app/vendor.protogen/validate &&\
+		rm -rf app/vendor.protogen/protoc-gen-validate ;\
+	fi
+	@if [ ! -d app/vendor.protogen/protoc-gen-openapiv2 ]; then \
+		mkdir -p app/vendor.protogen/protoc-gen-openapiv2/options &&\
+		git clone https://github.com/grpc-ecosystem/grpc-gateway app/vendor.protogen/openapiv2 &&\
+		mv app/vendor.protogen/openapiv2/protoc-gen-openapiv2/options/*.proto app/vendor.protogen/protoc-gen-openapiv2/options &&\
+		rm -rf app/vendor.protogen/openapiv2 ;\
+	fi
+
+run-local:
+	docker-compose -f .docker-compose.yaml up --build -d
+
+down-local:
+	docker-compose -f .docker-compose.yaml down

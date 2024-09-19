@@ -14,3 +14,13 @@ redis:
   connection_timeout: "5s"
   max_idle: 10
   idle_timeout: "300s"
+http:
+  host: "0.0.0.0"
+  port: "8080"
+swagger:
+  host: "0.0.0.0"
+  port: "8090"
+kafka_consumer:
+  user_creation_topic_name: "User-Creation"
+  brokers: "localhost:9092, localhost:9093, localhost:9094"
+  group_id: "User"
