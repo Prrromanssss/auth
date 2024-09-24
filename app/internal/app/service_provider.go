@@ -67,6 +67,7 @@ func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
 		if err != nil {
 			log.Panicf("db ping error: %s", err.Error())
 		}
+
 		closer.Add(cl.Close)
 
 		s.db = cl
@@ -176,6 +177,7 @@ func (s *serviceProvider) Consumer() kafka.Consumer {
 			s.ConsumerGroup(),
 			s.ConsumerGroupHandler(),
 		)
+
 		closer.Add(s.consumer.Close)
 	}
 

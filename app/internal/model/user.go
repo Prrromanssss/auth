@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// User holds the parameters for a user.
 type User struct {
 	UserID    int64
 	Name      string
@@ -51,11 +52,4 @@ type UpdateUserResponse struct {
 // DeleteUserParams holds the parameters for deleting a user by ID.
 type DeleteUserParams struct {
 	UserID int64
-}
-
-// CreateAPILogParams holds the parameters for logging API actions related to user creation.
-type CreateAPILogParams struct {
-	Method       string
-	RequestData  interface{}
-	ResponseData interface{}
 }

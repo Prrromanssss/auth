@@ -123,7 +123,7 @@ func (a *App) initDeps(ctx context.Context) error {
 	return nil
 }
 
-func (a *App) initConfig(_ context.Context) error {
+func (a *App) initConfig(context.Context) error {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
@@ -136,7 +136,7 @@ func (a *App) initConfig(_ context.Context) error {
 	return nil
 }
 
-func (a *App) initServiceProvider(_ context.Context) error {
+func (a *App) initServiceProvider(context.Context) error {
 	a.serviceProvider = newServiceProvider(a.cfg)
 
 	return nil
@@ -169,13 +169,13 @@ func (a *App) initHTTPServer(ctx context.Context) error {
 
 	corsMiddleware := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Content-Type", "Content-Length", "Authorization"},
 		AllowCredentials: true,
 	})
 
 	a.httpServer = &http.Server{
-		ReadHeaderTimeout: 10 * time.Second,
+		ReadHeaderTimeout: time.Duration(a.cfg.HTTP.ReadHeaderTimeout) * time.Second,
 		Addr:              a.cfg.HTTP.Address(),
 		Handler:           corsMiddleware.Handler(mux),
 	}
@@ -195,7 +195,7 @@ func (a *App) initSwaggerServer(ctx context.Context) error {
 	mux.HandleFunc("/api.swagger.json", serveSwaggerFile("/api.swagger.json"))
 
 	a.swaggerServer = &http.Server{
-		ReadHeaderTimeout: 10 * time.Second,
+		ReadHeaderTimeout: time.Duration(a.cfg.Swagger.ReadHeaderTimeout) * time.Second,
 		Addr:              a.cfg.Swagger.Address(),
 		Handler:           mux,
 	}
@@ -302,7 +302,13 @@ func (a *App) gracefulShutdown(ctx context.Context, cancel context.CancelFunc, w
 		log.Panicf("cannot shutdown http server: %+v", err)
 	}
 
+	err = a.swaggerServer.Shutdown(ctx)
+	if err != nil {
+		log.Panicf("cannot shutdown swagger server: %+v", err)
+	}
+
 	cancel()
+
 	if wg != nil {
 		wg.Wait()
 	}
@@ -311,5 +317,6 @@ func (a *App) gracefulShutdown(ctx context.Context, cancel context.CancelFunc, w
 func waitSignal() chan os.Signal {
 	sigterm := make(chan os.Signal, 1)
 	signal.Notify(sigterm, syscall.SIGINT, syscall.SIGTERM)
+
 	return sigterm
 }

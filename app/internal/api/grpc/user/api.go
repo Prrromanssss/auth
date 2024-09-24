@@ -31,8 +31,6 @@ func NewGRPCHandlers(userService service.UserService) *GRPCHandlers {
 func (h *GRPCHandlers) Create(ctx context.Context, req *pb.CreateRequest) (*pb.CreateResponse, error) {
 	log.Infof("rpc Create, request: %+v", req)
 
-	log.Info(h.userService)
-
 	if req.Password != req.PasswordConfirm {
 		return nil, errors.New("passwords don't match")
 	}

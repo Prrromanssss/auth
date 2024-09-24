@@ -5,8 +5,6 @@ import (
 	"log"
 
 	"github.com/Prrromanssss/auth/internal/app"
-
-	_ "github.com/lib/pq"
 )
 
 func main() {

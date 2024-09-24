@@ -12,11 +12,11 @@ import (
 
 // Config holds the configuration for the application.
 type Config struct {
-	GRPC          yaml.Server        `validate:"required" yaml:"grpc"`
+	GRPC          yaml.GRPCServer    `validate:"required" yaml:"grpc"`
 	Postgres      yaml.Postgres      `validate:"required" yaml:"postgres"`
 	Redis         yaml.Redis         `validate:"required" yaml:"redis"`
-	HTTP          yaml.Server        `validate:"required" yaml:"http"`
-	Swagger       yaml.Server        `validate:"required" yaml:"swagger"`
+	HTTP          yaml.HTTPServer    `validate:"required" yaml:"http"`
+	Swagger       yaml.HTTPServer    `validate:"required" yaml:"swagger"`
 	KafkaConsumer yaml.KafkaConsumer `validate:"required" yaml:"kafka_consumer"`
 }
 

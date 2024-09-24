@@ -26,6 +26,7 @@ func NewCache(cache cacheClient.RedisClient) cache.UserCache {
 func (c *userRedis) Create(ctx context.Context, params model.User) (err error) {
 	paramsCache := converter.ConvertUserFromServiceToCache(params)
 	userIDString := strconv.FormatInt(paramsCache.UserID, 10)
+
 	err = c.cache.HashSet(ctx, userIDString, paramsCache)
 	if err != nil {
 		return err
@@ -71,6 +72,7 @@ func (c *userRedis) Get(ctx context.Context, params model.GetUserParams) (resp m
 func (c *userRedis) Delete(ctx context.Context, params model.DeleteUserParams) (err error) {
 	paramsCache := converter.ConvertDeleteUserParamsFromServiceToCache(params)
 	userIDString := strconv.FormatInt(paramsCache.UserID, 10)
+
 	err = c.cache.Del(ctx, userIDString)
 	if err != nil {
 		return err

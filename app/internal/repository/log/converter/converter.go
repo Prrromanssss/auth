@@ -15,6 +15,7 @@ func ConvertCreateAPILogParamsFromServiceToRepo(params model.CreateAPILogParams)
 	if err != nil {
 		return modelRepo.CreateAPILogParams{}, err
 	}
+
 	requestData := string(requestDataBytes)
 
 	var responseData sql.NullString
